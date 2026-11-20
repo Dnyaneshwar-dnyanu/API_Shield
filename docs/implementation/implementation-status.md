@@ -3,8 +3,8 @@
 This document tracks the real-time implementation status of the APIShield platform across all microservices, frontend applications, infrastructure, automated tests, and Postman collections.
 
 > **Last Updated:** 2026-11-20  
-> **Current Phase:** Phase 1 (Backend Foundation: Eureka Discovery & Inter-Service Infrastructure) — COMPLETED  
-> **Next Target:** Phase 2 (Core Infrastructure & Local Orchestration: Docker Compose, Redis, Kafka, MySQL Schemas) — PENDING USER APPROVAL  
+> **Current Phase:** Phase 2 (Core Infrastructure & Local Orchestration) — COMPLETED  
+> **Next Target:** Phase 3 (API Registry Service: SSRF Protection, Plans, Catalog) — PENDING USER APPROVAL  
 
 ---
 
@@ -13,7 +13,7 @@ This document tracks the real-time implementation status of the APIShield platfo
 | Layer / Component | Target Services / Modules | Completed & Verified | In Progress | Pending | Status |
 | :--- | :--- | :---: | :---: | :---: | :--- |
 | **Backend Services** | 9 microservices + common | 2 (`user-service`, `discovery-server` + `common`) | 0 | 8 | `20% Complete` |
-| **Infrastructure** | Docker, MySQL, Redis, Kafka, Eureka | 1 (Eureka Discovery) | 0 | 4 | `Pending Phase 2` |
+| **Infrastructure** | Docker, MySQL, Redis, Kafka, Eureka | 5 (All core infra ready) | 0 | 0 | `100% Configured & Verified` |
 | **Frontend** | React SPA (Owner, Dev, Admin) | 0 | 0 | 1 | `Pending Phase 9` |
 | **Architecture & Docs** | Specifications & Diagrams | 6 docs complete | 0 | 0 | `100% Complete` |
 | **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 108 tests passing | 0 | Pending others | `108 Passing (100%)` |
@@ -25,6 +25,16 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 ### 1. COMPLETED AND VERIFIED
 *The following components have working code, complete tests passing, and verified functionality:*
+
+- **Core Infrastructure & Local Orchestration (`infrastructure/`):**
+  - [x] Multi-schema MySQL 8.0+ initialization script (`infrastructure/mysql/init-databases.sql`) creating 7 isolated databases and service-specific users.
+  - [x] Redis configuration (`infrastructure/redis/redis.conf`) with AOF persistence and LRU eviction policy.
+  - [x] Atomic token-bucket sliding-window rate limiter Lua script (`infrastructure/redis/scripts/token_bucket.lua`).
+  - [x] Apache Kafka broker (KRaft mode) and automated topic initialization script (`infrastructure/kafka/init-topics.sh` & `init-topics.ps1`) for 7 canonical topics.
+  - [x] Master Docker Compose orchestration descriptor (`infrastructure/docker/docker-compose.yml`) with health checks.
+  - [x] Prometheus scrape config and Grafana datasource definitions (`infrastructure/monitoring/`).
+  - [x] Root environment template (`.env.example`).
+  - [x] Automated infrastructure verification script (`infrastructure/scripts/verify-infra.ps1`).
 
 - **Backend Multi-Module Foundation (`backend/pom.xml`):**
   - [x] Root Maven aggregator with centralized `<dependencyManagement>`.
@@ -149,13 +159,14 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 ---
 
-### [ ] Phase 2: Core Infrastructure & Local Orchestration
-- [ ] Create MySQL multi-database init script (`infrastructure/mysql/init-databases.sql`).
-- [ ] Create Redis configuration with persistence (`infrastructure/redis/redis.conf`).
-- [ ] Create Kafka KRaft broker and topic provisioning script (`infrastructure/kafka/`).
-- [ ] Create master `infrastructure/docker/docker-compose.yml`.
-- [ ] Test end-to-end container startup and connectivity.
-- [ ] Git commit: `feat(infra): provision multi-schema mysql, redis, kafka topics, and docker compose orchestration`.
+### [x] Phase 2: Core Infrastructure & Local Orchestration
+- [x] Create MySQL multi-database init script (`infrastructure/mysql/init-databases.sql`).
+- [x] Create Redis configuration with persistence (`infrastructure/redis/redis.conf`) and token bucket Lua script.
+- [x] Create Kafka KRaft broker and topic provisioning script (`infrastructure/kafka/init-topics.sh` & `.ps1`).
+- [x] Create master `infrastructure/docker/docker-compose.yml`.
+- [x] Create Prometheus and Grafana monitoring stubs (`infrastructure/monitoring/`).
+- [x] Create root `.env.example` template.
+- [x] Create and pass automated infrastructure verification script (`infrastructure/scripts/verify-infra.ps1`).
 
 ---
 
