@@ -1,19 +1,28 @@
 package com.apishield.userservice.service.impl;
 
+import com.apishield.userservice.dto.request.LoginRequest;
 import com.apishield.userservice.dto.request.RegisterRequest;
+import com.apishield.userservice.dto.response.LoginResponse;
 import com.apishield.userservice.dto.response.UserResponse;
 import com.apishield.userservice.entity.User;
 import com.apishield.userservice.enums.AccountStatus;
 import com.apishield.userservice.enums.Role;
+import com.apishield.userservice.exception.AccountInactiveException;
+import com.apishield.userservice.exception.AccountSuspendedException;
 import com.apishield.userservice.exception.DuplicateEmailException;
+import com.apishield.userservice.exception.InvalidCredentialsException;
 import com.apishield.userservice.exception.InvalidRoleException;
+import com.apishield.userservice.exception.ResourceNotFoundException;
 import com.apishield.userservice.repository.UserRepository;
+import com.apishield.userservice.security.JwtService;
 import com.apishield.userservice.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -22,13 +31,13 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @Override
     @Transactional
     public UserResponse register(RegisterRequest request) {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
 
-        // Validate requested role: public registration assigns DEVELOPER and prohibits self-assigning ADMIN or API_OWNER
         Role assignedRole = validateAndResolveRole(request.getRole());
 
         if (userRepository.existsByEmail(normalizedEmail)) {
@@ -51,16 +60,52 @@ public class AuthServiceImpl implements AuthService {
         User savedUser = userRepository.save(user);
         log.info("Successfully registered user with id: {} and email: {}", savedUser.getId(), savedUser.getEmail());
 
-        return UserResponse.builder()
-                .id(savedUser.getId())
-                .firstName(savedUser.getFirstName())
-                .lastName(savedUser.getLastName())
-                .email(savedUser.getEmail())
-                .role(savedUser.getRole())
-                .accountStatus(savedUser.getAccountStatus())
-                .emailVerified(savedUser.isEmailVerified())
-                .createdAt(savedUser.getCreatedAt())
+        return mapToUserResponse(savedUser);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public LoginResponse login(LoginRequest request) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> {
+                    log.warn("Login failed: account not found for normalized email '{}'", normalizedEmail);
+                    return new InvalidCredentialsException("Invalid email or password.");
+                });
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            log.warn("Login failed: incorrect password for email '{}'", normalizedEmail);
+            throw new InvalidCredentialsException("Invalid email or password.");
+        }
+
+        if (user.getAccountStatus() == AccountStatus.INACTIVE) {
+            log.warn("Login blocked: user {} account is INACTIVE", user.getId());
+            throw new AccountInactiveException("Account is inactive. Please verify your email or contact support.");
+        }
+
+        if (user.getAccountStatus() == AccountStatus.SUSPENDED) {
+            log.warn("Login blocked: user {} account is SUSPENDED", user.getId());
+            throw new AccountSuspendedException("Account has been suspended. Please contact support.");
+        }
+
+        String accessToken = jwtService.generateToken(user);
+        log.info("Successfully authenticated user with id: {} and issued access token", user.getId());
+
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .tokenType("Bearer")
+                .expiresIn(jwtService.getExpirationSeconds())
+                .user(mapToUserResponse(user))
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getCurrentUser(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        return mapToUserResponse(user);
     }
 
     private Role validateAndResolveRole(String requestedRole) {
@@ -79,5 +124,18 @@ public class AuthServiceImpl implements AuthService {
         }
 
         throw new InvalidRoleException("Invalid role specified: " + requestedRole + ". Allowed registration role is DEVELOPER.");
+    }
+
+    private UserResponse mapToUserResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .accountStatus(user.getAccountStatus())
+                .emailVerified(user.isEmailVerified())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }

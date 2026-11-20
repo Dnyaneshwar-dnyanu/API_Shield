@@ -1,29 +1,39 @@
 # User Service
 
 ## Purpose
-The User Service is a core microservice within the APIShield platform. It is responsible for user identity management, account registration, credential handling, role-based access control (RBAC), and authentication.
+The User Service is a core microservice within the APIShield platform. It is responsible for user identity management, account registration, credential handling, role-based access control (RBAC), and stateless JWT access-token authentication.
 
 ## Technology Stack
 - **Language:** Java 21 LTS
 - **Framework:** Spring Boot 4.1.2
 - **Data Persistence:** Spring Data JPA, Hibernate ORM, MySQL Connector/J
 - **Database Migrations:** Flyway (`flyway-core`, `flyway-mysql`, `spring-boot-starter-flyway`)
-- **Security:** Spring Security (BCrypt password encoding, stateless requests)
+- **Security & Authentication:** Spring Security (stateless session, BCrypt password hashing, custom JWT filter)
+- **JWT Library:** `com.auth0:java-jwt:4.4.0` (HMAC-SHA256 signing and claims verification)
 - **Validation:** Spring Boot Starter Validation (Jakarta Validation)
 - **Testing:** JUnit 5, Mockito, Spring Test / MockMvc, H2 Database (MySQL emulation)
 - **Monitoring:** Spring Boot Actuator
 - **Productivity:** Project Lombok
 - **Build Tool:** Apache Maven (via Maven Wrapper `mvnw`)
 
-## Database Configuration
-The service connects to MySQL (`apishield_user`) with schema validation (`ddl-auto: validate`) and Flyway database migrations enabled.
+## Configuration & Environment Variables
 
-Environment variables for datasource configuration:
-- `DB_HOST`: Host of MySQL server (default: `localhost`)
-- `DB_PORT`: Port of MySQL server (default: `3306`)
-- `DB_NAME`: Database name (default: `apishield_user`)
-- `DB_USERNAME`: Database username (default: `apishield_user`)
-- `DB_PASSWORD`: Database password (default: empty)
+Datasource and security settings are loaded from environment variables (see `.env.example`):
+
+| Variable | Description | Default (Local Dev) |
+|---|---|---|
+| `SPRING_DATASOURCE_URL` | Full JDBC connection URL | `jdbc:mysql://localhost:3306/apishield_user?useSSL=false...` |
+| `DB_HOST` | Database host | `localhost` |
+| `DB_PORT` | Database port (TiDB Cloud: `4000`, MySQL: `3306`) | `3306` |
+| `DB_NAME` | Database schema name | `apishield_user` |
+| `DB_USERNAME` | Database username | `apishield_user` |
+| `DB_PASSWORD` | Database password | *(empty)* |
+| `JWT_SECRET` | Secret key for HMAC-SHA256 (must be $\ge 32$ bytes / 256 bits) | *Configured dev key* |
+| `JWT_ISSUER` | JWT Issuer claim (`iss`) | `apishield-user-service` |
+| `JWT_EXPIRATION_SECONDS` | Access token lifespan in seconds | `3600` (1 hour) |
+
+> [!IMPORTANT]
+> **Startup Validation:** If `JWT_SECRET` is missing, blank, or shorter than 32 characters (256 bits), the service will immediately fail startup with a descriptive `IllegalStateException`.
 
 ### Database Schema (`users` table)
 - `id`: VARCHAR(36) UUID primary key
@@ -37,22 +47,15 @@ Environment variables for datasource configuration:
 - `created_at`: TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 - `updated_at`: TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 
+---
+
 ## API Endpoints
 
 ### 1. User Registration
-`POST /api/v1/auth/register`
+`POST /api/v1/auth/register` (Public)
 
-Creates a new developer account. Public self-registration assigns the `DEVELOPER` role by default.
+Creates a new developer account. Self-registration automatically assigns the `DEVELOPER` role. Attempting to self-assign `ADMIN` or `API_OWNER` returns `400 Bad Request`.
 
-#### Security & Validation Rules:
-- First name and last name: required, 1-100 characters.
-- Email: required, valid email format, max 255 characters, case-insensitively normalized.
-- Password: required, 8-100 characters, containing at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character (`@#$%^&+=!._-`).
-- Self-registration security constraint: Requesting `ADMIN` or `API_OWNER` is explicitly rejected with `400 Bad Request`. Omitting role or providing `DEVELOPER` assigns `DEVELOPER`.
-- Duplicate emails are rejected with `409 Conflict`.
-- Sensitive fields (`password`, `passwordHash`) are never exposed in responses or logs.
-
-#### Example Request:
 ```bash
 curl -X POST http://localhost:8081/api/v1/auth/register \
   -H "Content-Type: application/json" \
@@ -64,7 +67,7 @@ curl -X POST http://localhost:8081/api/v1/auth/register \
   }'
 ```
 
-#### Example Response (`201 Created`):
+**Response (`201 Created`):**
 ```json
 {
   "id": "e0b9691c-79f9-4b6a-9351-862d2d9ff6cb",
@@ -74,25 +77,90 @@ curl -X POST http://localhost:8081/api/v1/auth/register \
   "role": "DEVELOPER",
   "accountStatus": "ACTIVE",
   "emailVerified": false,
-  "createdAt": "2026-11-19T14:09:12.123Z"
+  "createdAt": "2026-11-20T01:30:00Z"
 }
 ```
 
-### 2. Actuator Health
-`GET /actuator/health`
+---
 
-Exposed publicly for service health checks. Returns `{"status": "UP"}`.
+### 2. User Login
+`POST /api/v1/auth/login` (Public)
+
+Authenticates user credentials and issues a signed JWT access token. Returns generic `401 Unauthorized` for both unknown emails and incorrect passwords to prevent user enumeration. Only accounts with `accountStatus == ACTIVE` are allowed to log in (inactive or suspended accounts return `403 Forbidden`).
+
+```bash
+curl -X POST http://localhost:8081/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "ada.lovelace@example.com",
+    "password": "SecureP@ssword123"
+  }'
+```
+
+**Response (`200 OK`):**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "tokenType": "Bearer",
+  "expiresIn": 3600,
+  "user": {
+    "id": "e0b9691c-79f9-4b6a-9351-862d2d9ff6cb",
+    "firstName": "Ada",
+    "lastName": "Lovelace",
+    "email": "ada.lovelace@example.com",
+    "role": "DEVELOPER",
+    "accountStatus": "ACTIVE",
+    "emailVerified": false,
+    "createdAt": "2026-11-20T01:30:00Z"
+  }
+}
+```
+
+---
+
+### 3. Current User Profile
+`GET /api/v1/auth/me` (Protected)
+
+Requires a valid `Bearer <access_token>` in the `Authorization` header.
+
+```bash
+curl -X GET http://localhost:8081/api/v1/auth/me \
+  -H "Authorization: Bearer <your_jwt_access_token>"
+```
+
+**Response (`200 OK`):**
+```json
+{
+  "id": "e0b9691c-79f9-4b6a-9351-862d2d9ff6cb",
+  "firstName": "Ada",
+  "lastName": "Lovelace",
+  "email": "ada.lovelace@example.com",
+  "role": "DEVELOPER",
+  "accountStatus": "ACTIVE",
+  "emailVerified": false,
+  "createdAt": "2026-11-20T01:30:00Z"
+}
+```
+
+---
+
+### 4. Actuator Health
+`GET /actuator/health` (Public)
+
+Health check endpoint. Returns `{"status": "UP"}`.
+
+---
 
 ## How to Test and Run
 
-### Run Unit and Integration Tests
-Integration tests run against an isolated in-memory H2 database in MySQL emulation mode:
+### Run Tests
+The automated test suite runs against an isolated in-memory H2 database in MySQL emulation mode:
 ```bash
 # Windows
-.\mvnw.cmd test
+.\mvnw.cmd clean test
 
 # Linux / macOS
-./mvnw test
+./mvnw clean test
 ```
 
 ### Package the Service
@@ -105,7 +173,7 @@ Integration tests run against an isolated in-memory H2 database in MySQL emulati
 ```
 
 ### Run the Service
-Ensure MySQL is accessible on `DB_HOST:DB_PORT` or run locally:
+Ensure your database (local MySQL or TiDB Cloud) is reachable:
 ```bash
 # Windows
 .\mvnw.cmd spring-boot:run
@@ -114,13 +182,13 @@ Ensure MySQL is accessible on `DB_HOST:DB_PORT` or run locally:
 ./mvnw spring-boot:run
 ```
 
-The service runs on port **8081**.
+---
 
 ## Current Implementation Status
-**Step 3: Database and Registration Implementation**
-- Flyway database migration `V1__create_users_table.sql` created.
-- User JPA Entity, Enums (`Role`, `AccountStatus`), and `UserRepository` implemented.
-- `POST /api/v1/auth/register` registration API implemented with BCrypt password hashing, email normalization, and role security enforcement.
-- Centralized `GlobalExceptionHandler` with standardized RFC-style error responses.
-- Stateless Spring Security filter chain permitting public registration and actuator health.
-- Comprehensive unit and integration test suite passing with 100% success rate (16/16 tests passing).
+**Step 4: Login and JWT Access Token Authentication**
+- `com.auth0:java-jwt:4.4.0` integrated for HMAC-SHA256 signing and validation.
+- `JwtService` implemented with startup validation ($\ge 32$ byte secret required).
+- `JwtAuthenticationFilter` and `JwtAuthenticationEntryPoint` configured in stateless Spring Security filter chain.
+- `POST /api/v1/auth/login` implemented with timing/enumeration-safe 401 handling, account status enforcement (`ACTIVE` only), and password hash protection.
+- Protected endpoint `GET /api/v1/auth/me` implemented to verify bearer token authentication.
+- Comprehensive test suite covering login success, invalid password, unknown email, inactive/suspended accounts, valid/expired/tampered tokens, and public registration.
