@@ -67,6 +67,31 @@ Datasource, JWT, and Refresh Token settings are loaded from environment variable
 - `replaced_by_token_id`: VARCHAR(36) NULL (points to successor token)
 - `revoke_reason`: VARCHAR(100) NULL (`ROTATED`, `LOGOUT`, `LOGOUT_ALL`, `REUSE_DETECTED`, `EXPIRED`)
 
+### 3. `password_reset_tokens` Table (`V3__create_password_reset_tokens_table.sql`)
+- `id`: VARCHAR(36) UUID primary key
+- `user_id`: VARCHAR(36) NOT NULL (foreign key referencing `users.id` with CASCADE delete)
+- `token_hash`: VARCHAR(64) NOT NULL UNIQUE (SHA-256 hash of single-use reset token)
+- `expires_at`: TIMESTAMP NOT NULL
+- `used_at`: TIMESTAMP NULL
+- `created_at`: TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+### 4. `email_verification_tokens` Table (`V4__create_email_verification_tokens_table.sql`)
+- `id`: VARCHAR(36) UUID primary key
+- `user_id`: VARCHAR(36) NOT NULL (foreign key referencing `users.id` with CASCADE delete)
+- `token_hash`: VARCHAR(64) NOT NULL UNIQUE (SHA-256 hash of verification token)
+- `expires_at`: TIMESTAMP NOT NULL
+- `used_at`: TIMESTAMP NULL
+- `created_at`: TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+- *Also alters `users` to add audit columns: `suspension_reason VARCHAR(255)`, `suspended_at TIMESTAMP`, `suspended_by VARCHAR(36)`.*
+
+### 5. `audit_logs` Table (`V5__create_audit_logs_table.sql`)
+- `id`: VARCHAR(36) UUID primary key
+- `actor_id`: VARCHAR(36) NOT NULL (UUID of administrator)
+- `target_id`: VARCHAR(36) NOT NULL (UUID of target user)
+- `action`: VARCHAR(50) NOT NULL (`ROLE_CHANGE`, `SUSPEND_USER`, `REACTIVATE_USER`, `ACTIVATE_USER`, `DEACTIVATE_USER`, `DELETE_USER`, `UPDATE_DETAILS`)
+- `reason`: VARCHAR(255) NULL
+- `created_at`: TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+
 ---
 
 ## Refresh-Token Lifecycle & Security Design
@@ -201,19 +226,91 @@ curl -X POST http://localhost:8081/api/v1/auth/logout-all \
 
 ---
 
-### 6. Current User Profile
-`GET /api/v1/auth/me` (Protected)
+### 6. User Profile Management
+#### A. Retrieve Current Profile
+`GET /api/v1/users/me` (Protected)
 
-Requires `Authorization: Bearer <your_jwt_access_token>`.
+Requires `Authorization: Bearer <your_jwt_access_token>`. Resolves the user identity exclusively from the authenticated JWT security context.
 
 ```bash
-curl -X GET http://localhost:8081/api/v1/auth/me \
+curl -X GET http://localhost:8081/api/v1/users/me \
   -H "Authorization: Bearer <your_jwt_access_token>"
+```
+
+#### B. Update Current Profile
+`PUT /api/v1/users/me` (Protected)
+
+Requires `Authorization: Bearer <your_jwt_access_token>`. Allows updating safe profile fields (`firstName`, `lastName`). Automatically normalizes names and prevents mass-assignment of sensitive attributes (`role`, `email`, `accountStatus`, `id`, `passwordHash`).
+
+```bash
+curl -X PUT http://localhost:8081/api/v1/users/me \
+  -H "Authorization: Bearer <your_jwt_access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "Ada Augusta",
+    "lastName": "King-Noel"
+  }'
 ```
 
 ---
 
-### 7. Actuator Health
+### 7. Password Management
+#### A. Change Password
+`POST /api/v1/users/me/change-password` (Protected)
+Requires authentication. Verifies current password with BCrypt, validates new password complexity, enforces password confirmation match, prohibits reusing the same password, updates the hash, and terminates all existing refresh sessions.
+
+#### B. Forgot Password
+`POST /api/v1/auth/forgot-password` (Public)
+Accepts user email and dispatches a single-use SHA-256 hashed reset token valid for 15 minutes. Returns a generic response to prevent account enumeration.
+
+#### C. Reset Password
+`POST /api/v1/auth/reset-password` (Public)
+Consumes the single-use reset token atomically with pessimistic write locking, updates the password, and invalidates all active refresh tokens.
+
+---
+
+### 8. Account Lifecycle
+#### A. Verify Email
+`POST /api/v1/auth/verify-email` (Public)
+Consumes single-use verification token and activates inactive accounts.
+
+#### B. Resend Verification
+`POST /api/v1/auth/resend-verification` (Public)
+Issues replacement verification token if account is unverified.
+
+#### C. Self-Service Deactivation
+`POST /api/v1/users/me/deactivate` (Protected)
+Requires password confirmation. Sets account to `INACTIVE` and terminates all sessions.
+
+#### D. Immediate JWT Revocation (Real-Time Enforcement)
+`JwtAuthenticationFilter` validates user existence and active status on every authenticated request. Inactive or suspended accounts are immediately blocked with HTTP 403 Forbidden without waiting for access token expiration.
+
+---
+
+### 9. Admin User Management (Role: ADMIN Required)
+- `GET /api/v1/admin/users`: Paged user listing with search, role, and account status filters.
+- `GET /api/v1/admin/users/{userId}`: Retrieve detailed user profile.
+- `PATCH /api/v1/admin/users/{userId}`: Safely update names.
+- `PATCH /api/v1/admin/users/{userId}/role`: Update role with self-demotion prevention and last active administrator protection.
+- `POST /api/v1/admin/users/{userId}/activate`: Administratively activate user.
+- `POST /api/v1/admin/users/{userId}/deactivate`: Administratively deactivate user.
+- `POST /api/v1/admin/users/{userId}/suspend`: Administratively suspend user with reason.
+- `POST /api/v1/admin/users/{userId}/reactivate`: Restore suspended user to active.
+- `DELETE /api/v1/admin/users/{userId}`: Soft-delete user (preserves audit records).
+- `GET /api/v1/admin/audit-logs`: Paged audit log trail.
+
+---
+
+### 10. Postman Collection & Automated Verification
+A complete Postman collection and environment are pre-configured in `postman/`:
+- `postman/APIShield-User-Service.postman_collection.json`
+- `postman/APIShield-User-Service.postman_environment.json`
+
+Import both files into Postman. The collection includes automatic token capture scripts that save `accessToken`, `adminAccessToken`, and user identifiers into environment variables for seamless testing.
+
+---
+
+### 11. Actuator Health
 `GET /actuator/health` (Public)
 
 Health check endpoint. Returns `{"status": "UP"}`.
@@ -253,10 +350,13 @@ Ensure MySQL or TiDB Cloud is configured in environment variables or `.env`:
 ---
 
 ## Current Implementation Status
-**Step 5: Refresh Tokens, Rotation and Logout**
-- Flyway migration `V2__create_refresh_tokens_table.sql` created with foreign keys and performance indexes.
-- `RefreshToken` entity and `RefreshTokenRepository` with pessimistic write locking implemented.
-- `RefreshTokenService` with cryptographic 256-bit generation, SHA-256 one-way hashing, atomic token rotation, and family-based reuse detection.
-- `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, and `POST /api/v1/auth/logout-all` endpoints implemented.
-- HttpOnly, SameSite, Path-restricted cookie delivery with Max-Age alignment.
-- Comprehensive unit and integration test suite passing with 100% success rate.
+**Steps 1 through 10: Complete Implementation**
+- Registration, BCrypt password hashing, role restrictions, and email normalization.
+- Stateless Spring Security with JWT (HMAC-SHA256) and HttpOnly refresh token cookies.
+- Cryptographic refresh token rotation, pessimistic write locking, and automatic family reuse detection.
+- Complete user profile management with strict mass-assignment protection.
+- Password change and single-use password reset lifecycle with token hashing.
+- Email verification, self-service deactivation, and real-time JWT revocation for inactive/suspended accounts.
+- Administrative user management: pagination, filtering, role assignment, last-admin protection, soft-delete, and audit logging.
+- 101 automated unit and integration tests passing with 100% success rate.
+- Ready-to-import Postman collection and environment.

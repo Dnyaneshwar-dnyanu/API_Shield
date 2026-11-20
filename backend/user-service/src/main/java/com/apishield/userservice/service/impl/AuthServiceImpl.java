@@ -138,15 +138,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private UserResponse mapToUserResponse(User user) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .accountStatus(user.getAccountStatus())
-                .emailVerified(user.isEmailVerified())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return UserResponse.fromEntity(user);
     }
 }
