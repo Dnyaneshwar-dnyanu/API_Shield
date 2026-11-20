@@ -54,6 +54,16 @@ public class User {
     @Builder.Default
     private boolean emailVerified = false;
 
+    @Column(name = "suspension_reason", length = 255)
+    private String suspensionReason;
+
+    @Column(name = "suspended_at")
+    private Instant suspendedAt;
+
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "suspended_by", length = 36)
+    private UUID suspendedBy;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
