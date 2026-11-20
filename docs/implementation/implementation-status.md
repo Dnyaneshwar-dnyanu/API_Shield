@@ -3,8 +3,8 @@
 This document tracks the real-time implementation status of the APIShield platform across all microservices, frontend applications, infrastructure, automated tests, and Postman collections.
 
 > **Last Updated:** 2026-11-20  
-> **Current Phase:** Phase 2 (Core Infrastructure & Local Orchestration) — COMPLETED  
-> **Next Target:** Phase 3 (API Registry Service: SSRF Protection, Plans, Catalog) — PENDING USER APPROVAL  
+> **Current Phase:** Phase 3 (API Registry Service: SSRF Protection, Plans, Catalog) — COMPLETED & VERIFIED  
+> **Next Target:** Phase 4 (Subscription & Billing Lifecycle Service) — PENDING USER APPROVAL  
 
 ---
 
@@ -12,12 +12,12 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 | Layer / Component | Target Services / Modules | Completed & Verified | In Progress | Pending | Status |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Backend Services** | 9 microservices + common | 2 (`user-service`, `discovery-server` + `common`) | 0 | 8 | `20% Complete` |
+| **Backend Services** | 9 microservices + common | 3 (`user-service`, `discovery-server`, `api-registry-service` + `common`) | 0 | 7 | `30% Complete` |
 | **Infrastructure** | Docker, MySQL, Redis, Kafka, Eureka | 5 (All core infra ready) | 0 | 0 | `100% Configured & Verified` |
 | **Frontend** | React SPA (Owner, Dev, Admin) | 0 | 0 | 1 | `Pending Phase 9` |
 | **Architecture & Docs** | Specifications & Diagrams | 6 docs complete | 0 | 0 | `100% Complete` |
-| **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 108 tests passing | 0 | Pending others | `108 Passing (100%)` |
-| **Postman Collections** | Postman API collections | 2 collections (26 requests) | 0 | Pending others | `Verified` |
+| **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 160 tests passing | 0 | Pending others | `160 Passing (100%)` |
+| **Postman Collections** | Postman API collections | 3 collections (40 requests) | 0 | Pending others | `Verified` |
 
 ---
 
@@ -85,6 +85,20 @@ This document tracks the real-time implementation status of the APIShield platfo
   - [x] Automated test suite: **101 tests passing** without regression (`mvnw test`).
   - [x] Postman collection: 23 requests organized across 5 functional folders with assertions.
 
+- **API Registry Service (`backend/api-registry-service`):**
+  - [x] Dedicated database schema `apishield_registry` with Flyway migration `V1__create_registry_tables.sql` (`apis`, `api_endpoints`, `api_plans`).
+  - [x] SSRF Protection Engine (`SsrfProtectionValidator`): Blocks loopback (127.0.0.1, ::1), cloud metadata (169.254.169.254), RFC 1918 private subnets, internal container names, and internal domain suffixes.
+  - [x] API Catalog Entities: `Api`, `ApiEndpoint`, `ApiPlan` with UUID primary keys and `@JdbcTypeCode(SqlTypes.VARCHAR)`.
+  - [x] Repositories: `ApiRepository`, `ApiEndpointRepository`, `ApiPlanRepository`.
+  - [x] Owner CRUD Operations (`/api/v1/apis`): Registration, metadata update, endpoint definition, tiered subscription plan setup (Free/Paid).
+  - [x] Lifecycle State Machine: Transitions from `DRAFT` to `PUBLISHED` (requires at least 1 endpoint and 1 plan) and `DEPRECATED`.
+  - [x] Redis Data-Plane Warming: `RegistryCacheService` warms `api:metadata:{slug}` upon publication/update and evicts on deprecation.
+  - [x] Event-Driven Architecture: `RegistryEventPublisher` produces `api.published` and `api.deprecated` events to Kafka topic `apishield.registry.events`.
+  - [x] Public Marketplace Catalog (`/api/v1/catalog`): Category filtering, full-text keyword search, and detailed public endpoint/plan view.
+  - [x] Gateway Internal Resolution (`/api/v1/internal/apis/resolve/{slug}` & `/api/v1/internal/plans/{planId}`): High-performance resolution for API Gateway and Subscription Service.
+  - [x] Automated test suite: **52 tests passing** (35 SSRF unit tests, 1 boot test, 8 owner API tests, 4 catalog tests, 4 internal resolution tests).
+  - [x] Postman collection: 14 requests organized across 4 functional folders with assertions.
+
 ---
 
 ### 2. IMPLEMENTED BUT NOT VERIFIED
@@ -103,18 +117,7 @@ This document tracks the real-time implementation status of the APIShield platfo
 ### 4. NOT IMPLEMENTED
 *The following components and services do not exist yet in the codebase:*
 
-- **Backend Foundation & Multi-Module:**
-  - [ ] Root Maven aggregator `backend/pom.xml`.
-  - [ ] Shared `backend/common` module.
-  - [ ] Netflix Eureka Discovery Server (`backend/discovery-server`).
-- **Core Infrastructure:**
-  - [ ] Multi-schema MySQL container and init script (`infrastructure/mysql/`).
-  - [ ] Redis container configuration (`infrastructure/redis/`).
-  - [ ] Apache Kafka container and topic provisioning (`infrastructure/kafka/`).
-  - [ ] Master Docker Compose environment (`infrastructure/docker/docker-compose.yml`).
-  - [ ] Prometheus & Grafana monitoring configuration (`infrastructure/monitoring/`).
 - **Microservices:**
-  - [ ] API Registry Service (`backend/api-registry-service`).
   - [ ] Subscription Service (`backend/subscription-service`).
   - [ ] API Key Service (`backend/api-key-service`).
   - [ ] Payment Service (`backend/payment-service`).

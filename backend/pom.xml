@@ -21,6 +21,7 @@
 		<module>common</module>
 		<module>discovery-server</module>
 		<module>user-service</module>
+		<module>api-registry-service</module>
 	</modules>
 
 	<properties>
