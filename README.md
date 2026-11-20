@@ -90,13 +90,25 @@ For complete technical specifications, review the architecture documents:
 - **Node.js:** Node 20 LTS & npm
 - **Container Engine:** Docker Engine 24+ and Docker Compose v2+
 
-### Quick Start (Coming in Step 2)
-The full stack will be orchestrated via Docker Compose:
-```bash
-# Clone the repository
-git clone <repository-url>
-cd API_Shield
+### Quick Start & Local Development
 
-# Start backing infrastructure (MySQL, Redis, Kafka, Eureka)
-docker compose -f infrastructure/docker/docker-compose.infra.yml up -d
+#### Build Backend Microservices
+```bash
+# Build all backend modules and execute test suite (108 tests)
+cd backend
+./mvnw clean test
+```
+
+#### Run Eureka Discovery Server
+```bash
+cd backend/discovery-server
+../mvnw spring-boot:run
+# Eureka Dashboard: http://localhost:8761
+```
+
+#### Run User Service
+```bash
+cd backend/user-service
+../mvnw spring-boot:run
+# User Service API: http://localhost:8081
 ```

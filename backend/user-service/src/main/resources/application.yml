@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: user-service
+  cloud:
+    compatibility-verifier:
+      enabled: false
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:apishield_user}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
@@ -44,3 +47,13 @@ management:
   endpoint:
     health:
       show-details: never
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: ${EUREKA_REGISTER_WITH_EUREKA:true}
+    fetch-registry: ${EUREKA_FETCH_REGISTRY:true}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.value}

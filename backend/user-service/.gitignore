@@ -39,3 +39,9 @@ build/
 
 # Postman files
 Postman
+
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3

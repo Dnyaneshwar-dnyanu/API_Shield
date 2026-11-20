@@ -1,0 +1,251 @@
+# APIShield — Implementation Status Tracker
+
+This document tracks the real-time implementation status of the APIShield platform across all microservices, frontend applications, infrastructure, automated tests, and Postman collections.
+
+> **Last Updated:** 2026-11-20  
+> **Current Phase:** Phase 1 (Backend Foundation: Eureka Discovery & Inter-Service Infrastructure) — COMPLETED  
+> **Next Target:** Phase 2 (Core Infrastructure & Local Orchestration: Docker Compose, Redis, Kafka, MySQL Schemas) — PENDING USER APPROVAL  
+
+---
+
+## Overall Progress Summary
+
+| Layer / Component | Target Services / Modules | Completed & Verified | In Progress | Pending | Status |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| **Backend Services** | 9 microservices + common | 2 (`user-service`, `discovery-server` + `common`) | 0 | 8 | `20% Complete` |
+| **Infrastructure** | Docker, MySQL, Redis, Kafka, Eureka | 1 (Eureka Discovery) | 0 | 4 | `Pending Phase 2` |
+| **Frontend** | React SPA (Owner, Dev, Admin) | 0 | 0 | 1 | `Pending Phase 9` |
+| **Architecture & Docs** | Specifications & Diagrams | 6 docs complete | 0 | 0 | `100% Complete` |
+| **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 108 tests passing | 0 | Pending others | `108 Passing (100%)` |
+| **Postman Collections** | Postman API collections | 2 collections (26 requests) | 0 | Pending others | `Verified` |
+
+---
+
+## Feature Status Categorization Matrix
+
+### 1. COMPLETED AND VERIFIED
+*The following components have working code, complete tests passing, and verified functionality:*
+
+- **Backend Multi-Module Foundation (`backend/pom.xml`):**
+  - [x] Root Maven aggregator with centralized `<dependencyManagement>`.
+  - [x] Unified dependency versions (Spring Boot 4.1.2, Spring Cloud 2024.0.0, Lombok, Jackson, JWT 4.4.0).
+  - [x] Self-contained Maven wrapper (`mvnw`, `mvnw.cmd`, `.mvn`).
+
+- **Shared Contracts Library (`backend/common`):**
+  - [x] Standard event envelope: `EventEnvelope<T>` and `EventMetadata`.
+  - [x] Shared domain event payload DTOs: `UserRegisteredEvent`, `ApiPublishedEvent`, `SubscriptionActivatedEvent`, `PaymentCompletedEvent`, `ApiKeyRevokedEvent`.
+  - [x] Standard RFC 7807 problem details representation: `ProblemDetailResponse`.
+  - [x] Shared security & HTTP constants: `HeaderConstants` (`X-Correlation-ID`, `X-Internal-Token`, `X-API-Key`, etc.).
+  - [x] Canonical topic constants: `KafkaTopics` (`apishield.user.events`, `apishield.registry.events`, etc.).
+  - [x] Cryptographic utilities: `CryptoUtils` (SHA-256 digests, constant-time equality).
+  - [x] Backward compatibility bridges for Spring Boot & Spring Cloud classloader interoperability (`ServerProperties`, `WebServerInitializedEvent`, `BootstrapContext`, `RestTemplateBuilder`).
+  - [x] Automated unit test suite: **6 tests passing**.
+
+- **Eureka Discovery Server (`backend/discovery-server`):**
+  - [x] Spring Cloud Netflix Eureka Server on port `8761`.
+  - [x] `@EnableEurekaServer` application bootstrapping.
+  - [x] Standalone configuration (`register-with-eureka: false`, `fetch-registry: false`).
+  - [x] Eureka self-preservation enabled with 10s eviction timer.
+  - [x] Actuator endpoints exposed (`health`, `info`, `metrics`).
+  - [x] Automated test suite: **1 test passing** (application context & web server bootstrap).
+  - [x] Postman collection: 3 requests verifying Dashboard, JSON apps registry, and Actuator health.
+
+- **User Service (`backend/user-service`):**
+  - [x] Connected to Maven multi-module parent (`backend/pom.xml`).
+  - [x] Integrated `common` module dependency.
+  - [x] Integrated `spring-cloud-starter-netflix-eureka-client` with configurable `EUREKA_SERVER_URL`.
+  - [x] Disabled Eureka in test profile to isolate local test runs.
+  - [x] Public registration (`POST /api/v1/auth/register`) with BCrypt hashing and role restrictions.
+  - [x] Login (`POST /api/v1/auth/login`) with HMAC-SHA256 JWT access token (15m) & refresh token cookie.
+  - [x] Opaque refresh token generation (256-bit entropy) with SHA-256 storage and rotation (`POST /api/v1/auth/refresh`).
+  - [x] Token family tracking and automatic revocation upon reuse detection.
+  - [x] Single session logout (`POST /api/v1/auth/logout`) and global logout (`POST /api/v1/auth/logout-all`).
+  - [x] User profile management (`GET /api/v1/users/me`, `PUT /api/v1/users/me`).
+  - [x] Password change (`PUT /api/v1/users/me/password`) with old password validation.
+  - [x] Forgot password and token-based reset (`POST /api/v1/auth/forgot-password`, `POST /api/v1/auth/reset-password`).
+  - [x] Email verification lifecycle (`POST /api/v1/auth/verify-email`, `POST /api/v1/auth/resend-verification`).
+  - [x] Self-service account deactivation (`POST /api/v1/users/me/deactivate`).
+  - [x] Real-time JWT revocation in `JwtAuthenticationFilter` for deactivated/suspended accounts.
+  - [x] Admin user management (`GET /api/v1/admin/users`, `GET /api/v1/admin/users/{id}`).
+  - [x] Dynamic admin filtering (email, role, status, date ranges) and pagination.
+  - [x] Admin role promotion/demotion (`PUT /api/v1/admin/users/{id}/role`).
+  - [x] Admin account suspension (`PUT /api/v1/admin/users/{id}/suspend`) and reactivation (`PUT /api/v1/admin/users/{id}/reactivate`).
+  - [x] Soft-delete protection with last-admin deletion prevention (`DELETE /api/v1/admin/users/{id}`).
+  - [x] Comprehensive security audit logging (`AuditLog` entity, `AuditLogRepository`, `AuditLogService`).
+  - [x] Automated test suite: **101 tests passing** without regression (`mvnw test`).
+  - [x] Postman collection: 23 requests organized across 5 functional folders with assertions.
+
+---
+
+### 2. IMPLEMENTED BUT NOT VERIFIED
+*No features currently in this state. All implemented User Service features have been verified with automated tests.*
+
+---
+
+### 3. PARTIALLY IMPLEMENTED
+- **Documentation (`docs/`):**
+  - [x] Complete architecture documentation (`overview.md`, `microservices.md`, `database-design.md`, `communication.md`, `request-flows.md`, `security.md`).
+  - [x] Implementation roadmap (`docs/implementation/implementation-roadmap.md`).
+  - [x] Implementation status tracker (`docs/implementation/implementation-status.md`).
+
+---
+
+### 4. NOT IMPLEMENTED
+*The following components and services do not exist yet in the codebase:*
+
+- **Backend Foundation & Multi-Module:**
+  - [ ] Root Maven aggregator `backend/pom.xml`.
+  - [ ] Shared `backend/common` module.
+  - [ ] Netflix Eureka Discovery Server (`backend/discovery-server`).
+- **Core Infrastructure:**
+  - [ ] Multi-schema MySQL container and init script (`infrastructure/mysql/`).
+  - [ ] Redis container configuration (`infrastructure/redis/`).
+  - [ ] Apache Kafka container and topic provisioning (`infrastructure/kafka/`).
+  - [ ] Master Docker Compose environment (`infrastructure/docker/docker-compose.yml`).
+  - [ ] Prometheus & Grafana monitoring configuration (`infrastructure/monitoring/`).
+- **Microservices:**
+  - [ ] API Registry Service (`backend/api-registry-service`).
+  - [ ] Subscription Service (`backend/subscription-service`).
+  - [ ] API Key Service (`backend/api-key-service`).
+  - [ ] Payment Service (`backend/payment-service`).
+  - [ ] Edge API Gateway (`backend/api-gateway`).
+  - [ ] Notification Service (`backend/notification-service`).
+  - [ ] Analytics Service (`backend/analytics-service`).
+- **Frontend:**
+  - [ ] React 18+ Single Page Application (`frontend/`).
+  - [ ] Developer Marketplace & Portal.
+  - [ ] API Owner Console.
+  - [ ] Admin Dashboard.
+- **End-to-End Suite:**
+  - [ ] Automated end-to-end integration tests (`tests/e2e/`).
+
+---
+
+### 5. NEEDS CORRECTION
+*No blocking defects or anti-patterns in the codebase. All existing User Service tests pass cleanly.*
+
+---
+
+## Phase Execution Checklist
+
+### [x] Phase 0: Repository Audit & Implementation Planning
+- [x] Audit all directories (`backend/`, `frontend/`, `infrastructure/`, `docs/`, `postman/`, `tests/`).
+- [x] Verify existing User Service test suite (101 tests pass).
+- [x] Verify Postman collections.
+- [x] Produce comprehensive feature status categorization report.
+- [x] Write `docs/implementation/implementation-roadmap.md`.
+- [x] Write `docs/implementation/implementation-status.md`.
+- [ ] Await user approval for Phase 1.
+
+---
+
+### [x] Phase 1: Backend Foundation (Eureka Discovery & Common Library)
+- [x] Create root `backend/pom.xml` with dependencyManagement.
+- [x] Build minimal `backend/common` module (envelopes, DTOs, RFC 7807, constants).
+- [x] Build `backend/discovery-server` (Netflix Eureka Server on :8761).
+- [x] Connect `backend/user-service` as Eureka client.
+- [x] Verify build and all tests passing (108 tests passing).
+- [x] Create Service Discovery Postman collection.
+
+---
+
+### [ ] Phase 2: Core Infrastructure & Local Orchestration
+- [ ] Create MySQL multi-database init script (`infrastructure/mysql/init-databases.sql`).
+- [ ] Create Redis configuration with persistence (`infrastructure/redis/redis.conf`).
+- [ ] Create Kafka KRaft broker and topic provisioning script (`infrastructure/kafka/`).
+- [ ] Create master `infrastructure/docker/docker-compose.yml`.
+- [ ] Test end-to-end container startup and connectivity.
+- [ ] Git commit: `feat(infra): provision multi-schema mysql, redis, kafka topics, and docker compose orchestration`.
+
+---
+
+### [ ] Phase 3: API Registry Service
+- [ ] Initialize `backend/api-registry-service` on port 8082.
+- [ ] Create Flyway migrations for `apis`, `api_endpoints`, `api_plans`.
+- [ ] Implement SSRF Protection Validator.
+- [ ] Implement Owner API CRUD, endpoints, and monetization plans.
+- [ ] Implement Public Marketplace Catalog endpoints.
+- [ ] Implement Redis cache warming and Kafka event publishing.
+- [ ] Write automated tests and Postman collection.
+- [ ] Git commit: `feat(registry): implement api registry service with ssrf protection, monetization plans, and marketplace catalog`.
+
+---
+
+### [ ] Phase 4: Subscription & Billing Lifecycle
+- [ ] Initialize `backend/subscription-service` on port 8083.
+- [ ] Create Flyway migrations for `subscriptions`.
+- [ ] Implement subscription state machine (`PENDING`, `ACTIVE`, `CANCELLED`, etc.).
+- [ ] Implement Free plan auto-activation.
+- [ ] Implement OpenFeign client to API Registry Service.
+- [ ] Implement Kafka consumer for payment completion.
+- [ ] Write automated tests and Postman collection.
+- [ ] Git commit: `feat(subscription): implement subscription service with lifecycle state machine and event-driven activation`.
+
+---
+
+### [ ] Phase 5: Payment Service (Razorpay Integration)
+- [ ] Initialize `backend/payment-service` on port 8085.
+- [ ] Create Flyway migrations for `payments`, `invoices`, `webhook_logs`.
+- [ ] Integrate Razorpay Orders API.
+- [ ] Implement HMAC-SHA256 webhook signature verification.
+- [ ] Publish `payment.completed` events to Kafka.
+- [ ] Write automated tests with Mock Razorpay server and Postman collection.
+- [ ] Git commit: `feat(payment): implement payment service with razorpay checkout, hmac webhook verification, and event dispatch`.
+
+---
+
+### [ ] Phase 6: API Key Service
+- [ ] Initialize `backend/api-key-service` on port 8084.
+- [ ] Create Flyway migrations for `api_keys`.
+- [ ] Implement `ash_live_{prefix}_{secret}` cryptographic generator.
+- [ ] Store SHA-256 hashes, return raw key once.
+- [ ] Synchronize keys to Redis cache (`apikey:auth:{keyHash}`).
+- [ ] Implement key rotation and revocation.
+- [ ] Write automated tests and Postman collection.
+- [ ] Git commit: `feat(apikey): implement api key service with sha256 hashing, redis sync, and subscription binding`.
+
+---
+
+### [ ] Phase 7: Edge API Gateway (Reverse Proxy & Rate Limiter)
+- [ ] Initialize `backend/api-gateway` on port 8080 (Spring Cloud Gateway).
+- [ ] Implement Control Plane routing via Eureka.
+- [ ] Implement 9-Phase Data Plane proxy filter (`/gateway/{apiSlug}/**`).
+- [ ] Implement Redis token bucket burst rate limiter (Lua script).
+- [ ] Implement Redis monthly quota counter.
+- [ ] Implement asynchronous Kafka telemetry publishing.
+- [ ] Write reactive integration tests and Postman collection.
+- [ ] Git commit: `feat(gateway): implement reactive api gateway with 9-phase proxy lifecycle, redis rate limiting, and kafka telemetry`.
+
+---
+
+### [ ] Phase 8: Analytics Service & Notification Service
+- [ ] Initialize `backend/analytics-service` on port 8087.
+- [ ] Ingest telemetry from Kafka into MySQL rollups.
+- [ ] Implement Owner, Dev, and Admin analytics endpoints.
+- [ ] Initialize `backend/notification-service` on port 8086.
+- [ ] Implement notification listeners for domain events.
+- [ ] Write automated tests and Postman collections.
+- [ ] Git commit: `feat(analytics-notification): implement analytics rollup engine and event-driven notification service`.
+
+---
+
+### [ ] Phase 9: React Frontend (Owner & Developer Portals)
+- [ ] Scaffolding React + Vite + Tailwind CSS in `frontend/`.
+- [ ] Implement authentication & token refresh interceptors.
+- [ ] Build Developer Marketplace and API Playground.
+- [ ] Build Plan Subscription and Razorpay checkout modal.
+- [ ] Build API Key Management interface.
+- [ ] Build Owner API registration wizard & metrics dashboard.
+- [ ] Build Admin Platform dashboard.
+- [ ] Verify production build.
+- [ ] Git commit: `feat(frontend): implement react spa with developer marketplace, owner console, and admin dashboard`.
+
+---
+
+### [ ] Phase 10: End-to-End Integration, Benchmarking & Deployment
+- [ ] Run full system Docker Compose stack.
+- [ ] Execute automated end-to-end test scenarios across all services.
+- [ ] Verify Prometheus and Grafana dashboards.
+- [ ] Export consolidated Postman collection.
+- [ ] Finalize documentation and deployment runbooks.
+- [ ] Git commit: `feat(e2e): complete end-to-end integration test suite, docker orchestration, and observability dashboards`.
