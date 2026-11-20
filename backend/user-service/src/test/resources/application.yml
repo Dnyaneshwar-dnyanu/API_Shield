@@ -27,6 +27,11 @@ security:
     secret: t3st-s3cur3-256-b1t-jwt-s3cr3t-k3y-f0r-un1t-and-1nt3gr4t10n-t3st1ng!
     issuer: apishield-user-service
     expiration-seconds: 3600
+    refresh-expiration-seconds: 604800
+    refresh-cookie-name: refresh_token
+    refresh-cookie-secure: false
+    refresh-cookie-same-site: Lax
+    refresh-cookie-path: /api/v1/auth
 
 management:
   endpoints:

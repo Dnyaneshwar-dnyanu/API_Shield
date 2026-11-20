@@ -30,6 +30,11 @@ security:
     secret: ${JWT_SECRET:d3f4u1t-s3cur3-256-b1t-jwt-s3cr3t-k3y-f0r-d3v3l0pm3nt-0nly!}
     issuer: ${JWT_ISSUER:apishield-user-service}
     expiration-seconds: ${JWT_EXPIRATION_SECONDS:3600}
+    refresh-expiration-seconds: ${JWT_REFRESH_EXPIRATION_SECONDS:604800}
+    refresh-cookie-name: ${JWT_REFRESH_COOKIE_NAME:refresh_token}
+    refresh-cookie-secure: ${JWT_REFRESH_COOKIE_SECURE:false}
+    refresh-cookie-same-site: ${JWT_REFRESH_COOKIE_SAME_SITE:Lax}
+    refresh-cookie-path: ${JWT_REFRESH_COOKIE_PATH:/api/v1/auth}
 
 management:
   endpoints:

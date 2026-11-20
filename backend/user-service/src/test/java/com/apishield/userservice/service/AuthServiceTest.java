@@ -2,8 +2,10 @@ package com.apishield.userservice.service;
 
 import com.apishield.userservice.dto.request.LoginRequest;
 import com.apishield.userservice.dto.request.RegisterRequest;
-import com.apishield.userservice.dto.response.LoginResponse;
+import com.apishield.userservice.dto.response.AuthResult;
+import com.apishield.userservice.dto.response.RefreshTokenResult;
 import com.apishield.userservice.dto.response.UserResponse;
+import com.apishield.userservice.entity.RefreshToken;
 import com.apishield.userservice.entity.User;
 import com.apishield.userservice.enums.AccountStatus;
 import com.apishield.userservice.enums.Role;
@@ -47,6 +49,9 @@ class AuthServiceTest {
 
     @Mock
     private JwtService jwtService;
+
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -207,18 +212,26 @@ class AuthServiceTest {
         when(passwordEncoder.matches("SecurePass123!", "hashed_bcrypt_password")).thenReturn(true);
         when(jwtService.generateToken(activeUser)).thenReturn("jwt.access.token");
         when(jwtService.getExpirationSeconds()).thenReturn(3600L);
+        when(refreshTokenService.createRefreshToken(activeUser)).thenReturn(
+                RefreshTokenResult.builder()
+                        .rawRefreshToken("mock-refresh-token")
+                        .refreshToken(RefreshToken.builder().build())
+                        .build()
+        );
 
-        LoginResponse response = authService.login(validLoginRequest);
+        AuthResult response = authService.login(validLoginRequest);
 
         assertThat(response).isNotNull();
-        assertThat(response.getAccessToken()).isEqualTo("jwt.access.token");
-        assertThat(response.getTokenType()).isEqualTo("Bearer");
-        assertThat(response.getExpiresIn()).isEqualTo(3600L);
-        assertThat(response.getUser()).isNotNull();
-        assertThat(response.getUser().getId()).isEqualTo(userId);
-        assertThat(response.getUser().getEmail()).isEqualTo("john.doe@example.com");
-        assertThat(response.getUser().getRole()).isEqualTo(Role.DEVELOPER);
-        assertThat(response.getUser().getAccountStatus()).isEqualTo(AccountStatus.ACTIVE);
+        assertThat(response.getRawRefreshToken()).isEqualTo("mock-refresh-token");
+        assertThat(response.getLoginResponse()).isNotNull();
+        assertThat(response.getLoginResponse().getAccessToken()).isEqualTo("jwt.access.token");
+        assertThat(response.getLoginResponse().getTokenType()).isEqualTo("Bearer");
+        assertThat(response.getLoginResponse().getExpiresIn()).isEqualTo(3600L);
+        assertThat(response.getLoginResponse().getUser()).isNotNull();
+        assertThat(response.getLoginResponse().getUser().getId()).isEqualTo(userId);
+        assertThat(response.getLoginResponse().getUser().getEmail()).isEqualTo("john.doe@example.com");
+        assertThat(response.getLoginResponse().getUser().getRole()).isEqualTo(Role.DEVELOPER);
+        assertThat(response.getLoginResponse().getUser().getAccountStatus()).isEqualTo(AccountStatus.ACTIVE);
     }
 
     @Test
@@ -229,10 +242,13 @@ class AuthServiceTest {
         when(passwordEncoder.matches("SecurePass123!", "hashed_bcrypt_password")).thenReturn(true);
         when(jwtService.generateToken(activeUser)).thenReturn("jwt.token");
         when(jwtService.getExpirationSeconds()).thenReturn(3600L);
+        when(refreshTokenService.createRefreshToken(activeUser)).thenReturn(
+                RefreshTokenResult.builder().rawRefreshToken("token").build()
+        );
 
-        LoginResponse response = authService.login(validLoginRequest);
+        AuthResult response = authService.login(validLoginRequest);
 
-        assertThat(response.getAccessToken()).isEqualTo("jwt.token");
+        assertThat(response.getLoginResponse().getAccessToken()).isEqualTo("jwt.token");
         verify(userRepository).findByEmail("john.doe@example.com");
     }
 
@@ -247,6 +263,7 @@ class AuthServiceTest {
 
         verify(passwordEncoder, never()).matches(anyString(), anyString());
         verify(jwtService, never()).generateToken(any(User.class));
+        verify(refreshTokenService, never()).createRefreshToken(any(User.class));
     }
 
     @Test
@@ -260,6 +277,7 @@ class AuthServiceTest {
                 .hasMessage("Invalid email or password.");
 
         verify(jwtService, never()).generateToken(any(User.class));
+        verify(refreshTokenService, never()).createRefreshToken(any(User.class));
     }
 
     @Test
@@ -274,6 +292,7 @@ class AuthServiceTest {
                 .hasMessageContaining("inactive");
 
         verify(jwtService, never()).generateToken(any(User.class));
+        verify(refreshTokenService, never()).createRefreshToken(any(User.class));
     }
 
     @Test
@@ -288,6 +307,7 @@ class AuthServiceTest {
                 .hasMessageContaining("suspended");
 
         verify(jwtService, never()).generateToken(any(User.class));
+        verify(refreshTokenService, never()).createRefreshToken(any(User.class));
     }
 
     // ================= GET CURRENT USER TESTS =================

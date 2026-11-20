@@ -1,9 +1,12 @@
 package com.apishield.userservice.exception;
 
 import com.apishield.userservice.dto.response.ErrorResponse;
+import com.apishield.userservice.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -20,7 +23,10 @@ import java.util.Map;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final RefreshTokenService refreshTokenService;
 
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(
@@ -36,6 +42,42 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRefreshTokenException(
+            InvalidRefreshTokenException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Refresh token invalid at path {}: {}", request.getRequestURI(), ex.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error(HttpStatus.UNAUTHORIZED.getReasonPhrase())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .header(HttpHeaders.SET_COOKIE, refreshTokenService.createCleanRefreshTokenCookie().toString())
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(TokenReuseException.class)
+    public ResponseEntity<ErrorResponse> handleTokenReuseException(
+            TokenReuseException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Security Alert: Refresh token reuse detected at path {}: {}", request.getRequestURI(), ex.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error(HttpStatus.UNAUTHORIZED.getReasonPhrase())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .header(HttpHeaders.SET_COOKIE, refreshTokenService.createCleanRefreshTokenCookie().toString())
+                .body(errorResponse);
     }
 
     @ExceptionHandler(AccountInactiveException.class)

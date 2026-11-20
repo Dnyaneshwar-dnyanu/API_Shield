@@ -2,7 +2,9 @@ package com.apishield.userservice.service.impl;
 
 import com.apishield.userservice.dto.request.LoginRequest;
 import com.apishield.userservice.dto.request.RegisterRequest;
+import com.apishield.userservice.dto.response.AuthResult;
 import com.apishield.userservice.dto.response.LoginResponse;
+import com.apishield.userservice.dto.response.RefreshTokenResult;
 import com.apishield.userservice.dto.response.UserResponse;
 import com.apishield.userservice.entity.User;
 import com.apishield.userservice.enums.AccountStatus;
@@ -16,6 +18,7 @@ import com.apishield.userservice.exception.ResourceNotFoundException;
 import com.apishield.userservice.repository.UserRepository;
 import com.apishield.userservice.security.JwtService;
 import com.apishield.userservice.service.AuthService;
+import com.apishield.userservice.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,6 +35,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     @Transactional
@@ -64,8 +68,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public LoginResponse login(LoginRequest request) {
+    @Transactional
+    public AuthResult login(LoginRequest request) {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
 
         User user = userRepository.findByEmail(normalizedEmail)
@@ -90,13 +94,20 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String accessToken = jwtService.generateToken(user);
-        log.info("Successfully authenticated user with id: {} and issued access token", user.getId());
+        RefreshTokenResult refreshResult = refreshTokenService.createRefreshToken(user);
 
-        return LoginResponse.builder()
+        log.info("Successfully authenticated user with id: {}, issued access token and refresh session", user.getId());
+
+        LoginResponse loginResponse = LoginResponse.builder()
                 .accessToken(accessToken)
                 .tokenType("Bearer")
                 .expiresIn(jwtService.getExpirationSeconds())
                 .user(mapToUserResponse(user))
+                .build();
+
+        return AuthResult.builder()
+                .loginResponse(loginResponse)
+                .rawRefreshToken(refreshResult.getRawRefreshToken())
                 .build();
     }
 
