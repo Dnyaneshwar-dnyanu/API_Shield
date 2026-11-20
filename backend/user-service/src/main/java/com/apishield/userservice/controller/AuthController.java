@@ -1,14 +1,21 @@
 package com.apishield.userservice.controller;
 
+import com.apishield.userservice.dto.request.ForgotPasswordRequest;
 import com.apishield.userservice.dto.request.LoginRequest;
 import com.apishield.userservice.dto.request.RegisterRequest;
+import com.apishield.userservice.dto.request.ResendVerificationRequest;
+import com.apishield.userservice.dto.request.ResetPasswordRequest;
+import com.apishield.userservice.dto.request.VerifyEmailRequest;
 import com.apishield.userservice.dto.response.AuthResult;
 import com.apishield.userservice.dto.response.LoginResponse;
 import com.apishield.userservice.dto.response.MessageResponse;
 import com.apishield.userservice.dto.response.TokenRotationResult;
 import com.apishield.userservice.dto.response.UserResponse;
 import com.apishield.userservice.exception.InvalidRefreshTokenException;
+import com.apishield.userservice.service.AccountService;
 import com.apishield.userservice.service.AuthService;
+import com.apishield.userservice.service.NotificationService;
+import com.apishield.userservice.service.PasswordService;
 import com.apishield.userservice.service.RefreshTokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -28,6 +36,9 @@ public class AuthController {
 
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
+    private final PasswordService passwordService;
+    private final NotificationService notificationService;
+    private final AccountService accountService;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -100,5 +111,53 @@ public class AuthController {
         UUID userId = UUID.fromString(authentication.getName());
         UserResponse response = authService.getCurrentUser(userId);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordService.forgotPassword(request);
+        return ResponseEntity.ok(new MessageResponse("If an account with that email exists, a password reset link has been sent."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordService.resetPassword(request);
+        return ResponseEntity.ok(new MessageResponse("Password reset successfully. All active sessions have been invalidated. Please log in with your new password."));
+    }
+
+    /**
+     * Development testing hook to retrieve the latest raw password-reset token for a given email address.
+     * In production, the Notification Service delivers this out-of-band via email.
+     */
+    @GetMapping("/dev/latest-reset-token")
+    public ResponseEntity<Map<String, String>> getDevResetToken(@RequestParam String email) {
+        String token = notificationService.getLatestDevResetToken(email);
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "No active reset token found in development store for " + email));
+        }
+        return ResponseEntity.ok(Map.of("email", email, "resetToken", token));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<MessageResponse> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        accountService.verifyEmail(request);
+        return ResponseEntity.ok(new MessageResponse("Email verified successfully. Your account is now active."));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<MessageResponse> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        accountService.resendVerificationEmail(request);
+        return ResponseEntity.ok(new MessageResponse("If the account exists and is not yet verified, a new verification link has been sent."));
+    }
+
+    @GetMapping("/dev/latest-verification-token")
+    public ResponseEntity<Map<String, String>> getDevVerificationToken(@RequestParam String email) {
+        String token = notificationService.getLatestDevVerificationToken(email);
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "No active verification token found in development store for " + email));
+        }
+        return ResponseEntity.ok(Map.of("email", email, "verificationToken", token));
     }
 }
