@@ -1,0 +1,30 @@
+name: APIShield - Local Dev Environment
+values:
+  - key: baseUrl
+    value: 'http://localhost:8081'
+  - key: accessToken
+    value: ''
+  - key: adminAccessToken
+    value: ''
+  - key: userId
+    value: ''
+  - key: targetUserId
+    value: ''
+  - key: resetToken
+    value: ''
+  - key: verificationToken
+    value: ''
+  - key: eurekaUrl
+    value: 'http://localhost:8761'
+  - key: registryUrl
+    value: 'http://localhost:8082'
+  - key: apiId
+    value: ''
+  - key: apiSlug
+    value: ''
+  - key: planId
+    value: ''
+  - key: subscriptionUrl
+    value: 'http://localhost:8083'
+  - key: subscriptionId
+    value: ''

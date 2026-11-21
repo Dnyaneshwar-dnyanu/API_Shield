@@ -105,4 +105,7 @@ data/
 # ==========================================
 *.local.postman_environment.json
 .postman/
-postman/
+
+# IDE files
+.vscode/
+.idea/

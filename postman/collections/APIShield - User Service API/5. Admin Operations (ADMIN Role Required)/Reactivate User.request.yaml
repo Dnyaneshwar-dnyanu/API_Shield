@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/users/{{targetUserId}}/reactivate"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminAccessToken}}"
+order: 5000

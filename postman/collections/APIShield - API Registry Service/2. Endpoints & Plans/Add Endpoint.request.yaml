@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{registryUrl}}/api/v1/apis/{{apiId}}/endpoints"
+method: POST
+headers:
+  Content-Type: application/json
+  X-User-Id: "{{userId}}"
+body:
+  type: text
+  content: |-
+    {
+      "pathPattern": "/v1/current",
+      "httpMethod": "GET",
+      "description": "Get current weather condition by location",
+      "isActive": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201", function () {
+          pm.response.to.have.status(201);
+      });
+    language: text/javascript
+order: 1000

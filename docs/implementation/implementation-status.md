@@ -2,9 +2,9 @@
 
 This document tracks the real-time implementation status of the APIShield platform across all microservices, frontend applications, infrastructure, automated tests, and Postman collections.
 
-> **Last Updated:** 2026-11-20  
-> **Current Phase:** Phase 3 (API Registry Service: SSRF Protection, Plans, Catalog) — COMPLETED & VERIFIED  
-> **Next Target:** Phase 4 (Subscription & Billing Lifecycle Service) — PENDING USER APPROVAL  
+> **Last Updated:** 2026-11-21  
+> **Current Phase:** Phase 4 (Subscription & Billing Lifecycle Service) — COMPLETED & VERIFIED  
+> **Next Target:** Phase 5 (Payment Service: Razorpay Integration) — PENDING USER APPROVAL  
 
 ---
 
@@ -12,12 +12,12 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 | Layer / Component | Target Services / Modules | Completed & Verified | In Progress | Pending | Status |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Backend Services** | 9 microservices + common | 3 (`user-service`, `discovery-server`, `api-registry-service` + `common`) | 0 | 7 | `30% Complete` |
+| **Backend Services** | 9 microservices + common | 4 (`user-service`, `discovery-server`, `api-registry-service`, `subscription-service` + `common`) | 0 | 6 | `40% Complete` |
 | **Infrastructure** | Docker, MySQL, Redis, Kafka, Eureka | 5 (All core infra ready) | 0 | 0 | `100% Configured & Verified` |
 | **Frontend** | React SPA (Owner, Dev, Admin) | 0 | 0 | 1 | `Pending Phase 9` |
 | **Architecture & Docs** | Specifications & Diagrams | 6 docs complete | 0 | 0 | `100% Complete` |
-| **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 160 tests passing | 0 | Pending others | `160 Passing (100%)` |
-| **Postman Collections** | Postman API collections | 3 collections (40 requests) | 0 | Pending others | `Verified` |
+| **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 174 tests passing | 0 | Pending others | `174 Passing (100%)` |
+| **Postman Collections** | Postman API collections | 4 collections (47 requests) | 0 | Pending others | `Verified` |
 
 ---
 
@@ -99,6 +99,22 @@ This document tracks the real-time implementation status of the APIShield platfo
   - [x] Automated test suite: **52 tests passing** (35 SSRF unit tests, 1 boot test, 8 owner API tests, 4 catalog tests, 4 internal resolution tests).
   - [x] Postman collection: 14 requests organized across 4 functional folders with assertions.
 
+- **Subscription Service (`backend/subscription-service`):**
+  - [x] Dedicated database schema `apishield_subscription` with Flyway migration `V1__create_subscriptions_table.sql`.
+  - [x] Subscription Lifecycle State Machine: `PENDING`, `ACTIVE`, `CANCELLED`, `EXPIRED`, `SUSPENDED`.
+  - [x] Entity & Repository: `Subscription` with UUID primary keys, `@JdbcTypeCode(SqlTypes.VARCHAR)`, and `SubscriptionRepository`.
+  - [x] Inter-Service Integration: `RegistryServiceClient` using `RestClient` to dynamically resolve plan quotas, validity, and ownership from `api-registry-service`.
+  - [x] Duplicate Protection: Prevents duplicate `ACTIVE` or `PENDING` subscriptions for the same developer and API.
+  - [x] Free Plan Auto-Activation: Plans with `priceCents == 0` activate instantly with status `ACTIVE` and publish domain events.
+  - [x] Paid Plan Workflow: Subscriptions for monetized plans initialize in `PENDING` status awaiting payment completion.
+  - [x] Cancellation Protocol: Single-cancellation enforcement (`PUT /api/v1/subscriptions/{id}/cancel`) and domain event emission.
+  - [x] Event-Driven Architecture:
+    - Produces `subscription.activated` and `subscription.cancelled` events to Kafka topic `apishield.subscription.events`.
+    - `PaymentEventConsumer` consumes `apishield.payment.events`: on `payment.completed` activates subscription; on `payment.failed` suspends subscription.
+  - [x] Internal Gateway Validation: `GET /api/v1/internal/subscriptions/validate` verifies active subscription status, live rate limits (RPS), and monthly quotas for API Gateway routing.
+  - [x] Automated test suite: **14 tests passing** (context boot, controller lifecycle, internal validation, payment consumer).
+  - [x] Postman collection: 7 requests organized across 2 functional folders with assertions.
+
 ---
 
 ### 2. IMPLEMENTED BUT NOT VERIFIED
@@ -118,7 +134,6 @@ This document tracks the real-time implementation status of the APIShield platfo
 *The following components and services do not exist yet in the codebase:*
 
 - **Microservices:**
-  - [ ] Subscription Service (`backend/subscription-service`).
   - [ ] API Key Service (`backend/api-key-service`).
   - [ ] Payment Service (`backend/payment-service`).
   - [ ] Edge API Gateway (`backend/api-gateway`).

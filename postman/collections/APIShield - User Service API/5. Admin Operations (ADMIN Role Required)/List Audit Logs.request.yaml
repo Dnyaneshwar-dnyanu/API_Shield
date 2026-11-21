@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/audit-logs?page=0&size=20"
+method: GET
+queryParams:
+  page: "0"
+  size: "20"
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminAccessToken}}"
+order: 7000

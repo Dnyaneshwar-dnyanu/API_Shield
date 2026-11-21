@@ -1,0 +1,2 @@
+$kind: collection
+description: Subscription Service endpoints managing developer subscriptions, lifecycle state transitions, cancellation, and internal gateway validation.

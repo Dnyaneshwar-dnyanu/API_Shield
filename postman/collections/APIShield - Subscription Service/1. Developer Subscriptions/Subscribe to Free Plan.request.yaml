@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{subscriptionUrl}}/api/v1/subscriptions"
+method: POST
+headers:
+  Content-Type: application/json
+  X-User-Id: "{{userId}}"
+body:
+  type: text
+  content: |-
+    {
+      "apiId": "{{apiId}}",
+      "planId": "{{planId}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      if (pm.response.code === 201) {
+          var json = pm.response.json();
+          pm.environment.set('subscriptionId', json.id);
+          console.log('Saved subscriptionId to environment');
+      }
+      pm.test("Status code is 201", function () {
+          pm.response.to.have.status(201);
+      });
+    language: text/javascript
+order: 1000

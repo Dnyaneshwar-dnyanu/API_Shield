@@ -1,0 +1,29 @@
+$kind: http-request
+url: "{{registryUrl}}/api/v1/apis"
+method: POST
+headers:
+  Content-Type: application/json
+  X-User-Id: "{{userId}}"
+body:
+  type: text
+  content: |-
+    {
+      "name": "Weather Forecasting Service",
+      "slug": "weather-forecast-api",
+      "description": "Real-time weather data and forecast models",
+      "category": "Weather",
+      "targetBackendUrl": "https://api.weatherapi.com/v1",
+      "versionLabel": "v1",
+      "isPublic": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      if (pm.response.code === 201) {
+          var json = pm.response.json();
+          pm.environment.set('apiId', json.id);
+          pm.environment.set('apiSlug', json.slug);
+          console.log('Saved apiId and apiSlug to environment');
+      }
+    language: text/javascript
+order: 1000

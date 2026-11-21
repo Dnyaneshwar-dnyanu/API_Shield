@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{registryUrl}}/api/v1/apis/{{apiId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+  X-User-Id: "{{userId}}"
+body:
+  type: text
+  content: |-
+    {
+      "name": "Weather Forecasting Pro",
+      "description": "Updated global weather models and radar maps",
+      "category": "Weather",
+      "targetBackendUrl": "https://api.weatherapi.com/v1",
+      "isPublic": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+    language: text/javascript
+order: 4000

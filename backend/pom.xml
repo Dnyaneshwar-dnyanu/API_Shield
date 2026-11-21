@@ -22,6 +22,7 @@
 		<module>discovery-server</module>
 		<module>user-service</module>
 		<module>api-registry-service</module>
+		<module>subscription-service</module>
 	</modules>
 
 	<properties>

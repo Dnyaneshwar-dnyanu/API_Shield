@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{subscriptionUrl}}/api/v1/subscriptions/{{subscriptionId}}/cancel"
+method: PUT
+headers:
+  X-User-Id: "{{userId}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Status is CANCELLED", function () {
+          var json = pm.response.json();
+          pm.expect(json.status).to.eql("CANCELLED");
+      });
+    language: text/javascript
+order: 5000

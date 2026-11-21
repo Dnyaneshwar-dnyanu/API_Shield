@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{subscriptionUrl}}/api/v1/internal/subscriptions/{{subscriptionId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Matches requested subscription", function () {
+          var json = pm.response.json();
+          pm.expect(json.id).to.eql(pm.environment.get('subscriptionId'));
+      });
+    language: text/javascript
+order: 2000
