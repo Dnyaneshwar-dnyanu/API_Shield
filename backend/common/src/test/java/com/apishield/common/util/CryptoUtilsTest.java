@@ -37,4 +37,19 @@ class CryptoUtilsTest {
         assertThat(CryptoUtils.constantTimeEquals("secret123", null)).isFalse();
         assertThat(CryptoUtils.constantTimeEquals(null, null)).isFalse();
     }
+
+    @Test
+    @DisplayName("Should correctly compute HMAC-SHA256 hex digest")
+    void shouldComputeHmacSha256Hex() {
+        String data = "order_12345|pay_67890";
+        String secret = "rzp_secret_key";
+        String hex = CryptoUtils.hmacSha256Hex(data, secret);
+
+        assertThat(hex).isNotNull().hasSize(64);
+        // Verify deterministic calculation
+        assertThat(CryptoUtils.hmacSha256Hex(data, secret)).isEqualTo(hex);
+        // Verify null handling
+        assertThat(CryptoUtils.hmacSha256Hex(null, secret)).isNull();
+        assertThat(CryptoUtils.hmacSha256Hex(data, null)).isNull();
+    }
 }

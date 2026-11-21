@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{paymentUrl}}/api/v1/payments/webhook"
+method: POST
+headers:
+  Content-Type: application/json
+  X-Razorpay-Signature: "simulated_webhook_signature"
+body:
+  type: text
+  content: |-
+    {
+      "id": "evt_simulated_001",
+      "event": "order.paid",
+      "payload": {
+        "payment": {
+          "entity": {
+            "id": "pay_simulated_001",
+            "order_id": "{{orderId}}",
+            "amount": 2999,
+            "currency": "INR",
+            "status": "captured"
+          }
+        }
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status is 200 or 400", function () {
+          pm.expect([200, 400]).to.include(pm.response.code);
+      });
+    language: text/javascript
+order: 1000

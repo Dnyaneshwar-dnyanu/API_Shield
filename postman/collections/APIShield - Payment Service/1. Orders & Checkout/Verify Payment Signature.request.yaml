@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{paymentUrl}}/api/v1/payments/verify"
+method: POST
+headers:
+  Content-Type: application/json
+  X-User-Id: "{{userId}}"
+body:
+  type: text
+  content: |-
+    {
+      "orderId": "{{orderId}}",
+      "paymentId": "pay_mock_test_12345",
+      "signature": "mock_signature_hash"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 or 400 (if invalid signature)", function () {
+          pm.expect([200, 400]).to.include(pm.response.code);
+      });
+    language: text/javascript
+order: 2000

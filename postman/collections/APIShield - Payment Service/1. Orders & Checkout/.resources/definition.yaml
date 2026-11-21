@@ -1,0 +1,2 @@
+$kind: folder
+description: Endpoints for generating Razorpay checkout orders and verifying client payment signatures.

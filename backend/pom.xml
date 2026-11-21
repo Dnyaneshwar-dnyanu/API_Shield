@@ -23,6 +23,7 @@
 		<module>user-service</module>
 		<module>api-registry-service</module>
 		<module>subscription-service</module>
+		<module>payment-service</module>
 	</modules>
 
 	<properties>

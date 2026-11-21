@@ -28,3 +28,9 @@ values:
     value: 'http://localhost:8083'
   - key: subscriptionId
     value: ''
+  - key: paymentUrl
+    value: 'http://localhost:8085'
+  - key: paymentId
+    value: ''
+  - key: orderId
+    value: ''

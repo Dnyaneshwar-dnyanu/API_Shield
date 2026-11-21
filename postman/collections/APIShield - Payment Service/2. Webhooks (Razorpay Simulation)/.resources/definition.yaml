@@ -1,0 +1,2 @@
+$kind: folder
+description: Endpoints for receiving and verifying authentic Razorpay webhooks with HMAC-SHA256 signatures.

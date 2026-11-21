@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{paymentUrl}}/api/v1/payments/create-order"
+method: POST
+headers:
+  Content-Type: application/json
+  X-User-Id: "{{userId}}"
+body:
+  type: text
+  content: |-
+    {
+      "subscriptionId": "{{subscriptionId}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      if (pm.response.code === 201) {
+          var json = pm.response.json();
+          pm.environment.set('paymentId', json.paymentId);
+          pm.environment.set('orderId', json.orderId);
+          console.log('Saved paymentId and orderId to environment');
+      }
+      pm.test("Status code is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test("Order ID is present", function () {
+          var json = pm.response.json();
+          pm.expect(json.orderId).to.be.a('string');
+      });
+    language: text/javascript
+order: 1000

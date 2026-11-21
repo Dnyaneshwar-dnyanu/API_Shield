@@ -1,12 +1,15 @@
 package com.apishield.common.util;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
 /**
- * Lightweight cryptographic utility for SHA-256 digests and constant-time comparisons.
+ * Lightweight cryptographic utility for SHA-256 digests, HMAC-SHA256 signatures, and constant-time comparisons.
  */
 public final class CryptoUtils {
 
@@ -30,6 +33,28 @@ public final class CryptoUtils {
             return HexFormat.of().formatHex(hashBytes);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 algorithm not available in current JVM", e);
+        }
+    }
+
+    /**
+     * Computes the lowercase hexadecimal HMAC-SHA256 digest of a UTF-8 string with the provided secret.
+     *
+     * @param data Raw data string
+     * @param secret Key secret
+     * @return Hex-encoded 64-character HMAC-SHA256 digest, or null if either parameter is null
+     */
+    public static String hmacSha256Hex(String data, String secret) {
+        if (data == null || secret == null) {
+            return null;
+        }
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secretKeySpec = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            mac.init(secretKeySpec);
+            byte[] hashBytes = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hashBytes);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new IllegalStateException("Failed to calculate HMAC-SHA256", e);
         }
     }
 

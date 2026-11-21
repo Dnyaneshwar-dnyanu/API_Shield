@@ -1,0 +1,2 @@
+$kind: collection
+description: Payment Service endpoints managing Razorpay orders, client checkout verification, webhook signature processing, and invoicing.

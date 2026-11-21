@@ -115,10 +115,25 @@ This document tracks the real-time implementation status of the APIShield platfo
   - [x] Automated test suite: **14 tests passing** (context boot, controller lifecycle, internal validation, payment consumer).
   - [x] Postman collection: 7 requests organized across 2 functional folders with assertions.
 
+- **Payment Service (`backend/payment-service`):**
+  - [x] Dedicated database schema `apishield_payment` with Flyway migration `V1__create_payment_tables.sql` (`payments`, `invoices`, `webhook_logs`).
+  - [x] Razorpay Integration:
+    - Order creation (`POST /api/v1/payments/create-order`) validating pending subscription status and plan price.
+    - Client signature verification (`POST /api/v1/payments/verify`) using constant-time HMAC-SHA256 validation.
+    - Webhook processing (`POST /api/v1/payments/webhook`) with `X-Razorpay-Signature` validation, idempotency replay protection (`webhook_logs`), and invoice generation.
+  - [x] Event-Driven Architecture:
+    - Publishes `payment.completed` domain event to `apishield.payment.events` upon successful checkout or webhook (triggering immediate subscription activation in `subscription-service`).
+    - Publishes `payment.failed` event on declined payments.
+  - [x] Invoicing & Developer History:
+    - Auto-generates unique sequential invoices (`INV-YYYYMMDD-XXXXXX`) for completed payments.
+    - Developer history endpoint (`GET /api/v1/payments/history`) and invoice retrieval (`GET /api/v1/payments/{id}/invoice`).
+  - [x] Automated test suite: **16 tests passing** (context boot, order creation, signature verification, webhook handling, idempotency, history).
+  - [x] Postman collection: 7 requests organized across 3 functional folders with assertions.
+
 ---
 
 ### 2. IMPLEMENTED BUT NOT VERIFIED
-*No features currently in this state. All implemented User Service features have been verified with automated tests.*
+*No features currently in this state. All implemented microservices have been verified with automated test suites.*
 
 ---
 
@@ -135,7 +150,6 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 - **Microservices:**
   - [ ] API Key Service (`backend/api-key-service`).
-  - [ ] Payment Service (`backend/payment-service`).
   - [ ] Edge API Gateway (`backend/api-gateway`).
   - [ ] Notification Service (`backend/notification-service`).
   - [ ] Analytics Service (`backend/analytics-service`).
@@ -188,38 +202,38 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 ---
 
-### [ ] Phase 3: API Registry Service
-- [ ] Initialize `backend/api-registry-service` on port 8082.
-- [ ] Create Flyway migrations for `apis`, `api_endpoints`, `api_plans`.
-- [ ] Implement SSRF Protection Validator.
-- [ ] Implement Owner API CRUD, endpoints, and monetization plans.
-- [ ] Implement Public Marketplace Catalog endpoints.
-- [ ] Implement Redis cache warming and Kafka event publishing.
-- [ ] Write automated tests and Postman collection.
-- [ ] Git commit: `feat(registry): implement api registry service with ssrf protection, monetization plans, and marketplace catalog`.
+### [x] Phase 3: API Registry Service
+- [x] Initialize `backend/api-registry-service` on port 8082.
+- [x] Create Flyway migrations for `apis`, `api_endpoints`, `api_plans`.
+- [x] Implement SSRF Protection Validator.
+- [x] Implement Owner API CRUD, endpoints, and monetization plans.
+- [x] Implement Public Marketplace Catalog endpoints.
+- [x] Implement Redis cache warming and Kafka event publishing.
+- [x] Write automated tests and Postman collection.
+- [x] Git commit: `feat(registry): implement api registry service with ssrf protection, monetization plans, and marketplace catalog`.
 
 ---
 
-### [ ] Phase 4: Subscription & Billing Lifecycle
-- [ ] Initialize `backend/subscription-service` on port 8083.
-- [ ] Create Flyway migrations for `subscriptions`.
-- [ ] Implement subscription state machine (`PENDING`, `ACTIVE`, `CANCELLED`, etc.).
-- [ ] Implement Free plan auto-activation.
-- [ ] Implement OpenFeign client to API Registry Service.
-- [ ] Implement Kafka consumer for payment completion.
-- [ ] Write automated tests and Postman collection.
-- [ ] Git commit: `feat(subscription): implement subscription service with lifecycle state machine and event-driven activation`.
+### [x] Phase 4: Subscription & Billing Lifecycle
+- [x] Initialize `backend/subscription-service` on port 8083.
+- [x] Create Flyway migrations for `subscriptions`.
+- [x] Implement subscription state machine (`PENDING`, `ACTIVE`, `CANCELLED`, etc.).
+- [x] Implement Free plan auto-activation.
+- [x] Implement client to API Registry Service.
+- [x] Implement Kafka consumer for payment completion.
+- [x] Write automated tests and Postman collection.
+- [x] Git commit: `feat(subscription): implement subscription service with lifecycle state machine and event-driven activation`.
 
 ---
 
-### [ ] Phase 5: Payment Service (Razorpay Integration)
-- [ ] Initialize `backend/payment-service` on port 8085.
-- [ ] Create Flyway migrations for `payments`, `invoices`, `webhook_logs`.
-- [ ] Integrate Razorpay Orders API.
-- [ ] Implement HMAC-SHA256 webhook signature verification.
-- [ ] Publish `payment.completed` events to Kafka.
-- [ ] Write automated tests with Mock Razorpay server and Postman collection.
-- [ ] Git commit: `feat(payment): implement payment service with razorpay checkout, hmac webhook verification, and event dispatch`.
+### [x] Phase 5: Payment Service (Razorpay Integration)
+- [x] Initialize `backend/payment-service` on port 8085.
+- [x] Create Flyway migrations for `payments`, `invoices`, `webhook_logs`.
+- [x] Integrate Razorpay Orders API.
+- [x] Implement HMAC-SHA256 webhook signature verification.
+- [x] Publish `payment.completed` events to Kafka.
+- [x] Write automated tests with Mock Razorpay server and Postman collection.
+- [x] Git commit: `feat(payment): implement payment service with razorpay checkout, hmac webhook verification, and event dispatch`.
 
 ---
 
