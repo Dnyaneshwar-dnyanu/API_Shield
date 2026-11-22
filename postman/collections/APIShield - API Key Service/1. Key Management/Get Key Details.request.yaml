@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{apiKeyUrl}}/api/v1/keys/{{apiKeyId}}"
+method: GET
+headers:
+  X-User-Id: "{{userId}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Key matches ID", function () {
+          var json = pm.response.json();
+          pm.expect(json.id).to.eql(pm.environment.get('apiKeyId'));
+      });
+    language: text/javascript
+order: 3000

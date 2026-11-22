@@ -130,6 +130,18 @@ This document tracks the real-time implementation status of the APIShield platfo
   - [x] Automated test suite: **16 tests passing** (context boot, order creation, signature verification, webhook handling, idempotency, history).
   - [x] Postman collection: 7 requests organized across 3 functional folders with assertions.
 
+- **API Key Service (`backend/api-key-service`):**
+  - [x] Dedicated database schema `apishield_apikey` with Flyway migration `V1__create_api_keys_table.sql`.
+  - [x] Cryptographic Key Generator: Generates high-entropy keys (`ash_live_{prefix}_{secret}`) using `SecureRandom` (256-bit entropy).
+  - [x] Secure Storage: Stores exclusively SHA-256 digests (`key_hash`) in MySQL. Plaintext keys are NEVER stored or logged; returned to developer exactly once upon creation.
+  - [x] Subscription Binding: Validates that developer possesses an active subscription via `subscription-service` (`/api/v1/internal/subscriptions/validate`).
+  - [x] Redis Synchronization: Caches key verification metadata to `apikey:auth:{keyHash}` with 7-day TTL for sub-millisecond Gateway authentication.
+  - [x] Key Lifecycle & Rotation: Provides key listing, revocation (`POST /api/v1/keys/{id}/revoke`), rolling/rotation (`POST /api/v1/keys/{id}/roll`), and Redis cache eviction.
+  - [x] Event-Driven Revocation: Listens to `apishield.subscription.events` via `SubscriptionEventConsumer` and automatically revokes all keys and evicts Redis when `subscription.cancelled` occurs.
+  - [x] Gateway Fallback Verification: Exposes internal validation endpoint (`POST /api/v1/internal/keys/verify`) for Gateway cache misses.
+  - [x] Automated test suite: **12 tests passing** (context boot, key generation, entropy, controller integration, fallback verification, event consumer).
+  - [x] Postman collection: 6 requests organized across 2 functional folders with assertions.
+
 ---
 
 ### 2. IMPLEMENTED BUT NOT VERIFIED
@@ -149,7 +161,6 @@ This document tracks the real-time implementation status of the APIShield platfo
 *The following components and services do not exist yet in the codebase:*
 
 - **Microservices:**
-  - [ ] API Key Service (`backend/api-key-service`).
   - [ ] Edge API Gateway (`backend/api-gateway`).
   - [ ] Notification Service (`backend/notification-service`).
   - [ ] Analytics Service (`backend/analytics-service`).
@@ -237,15 +248,15 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 ---
 
-### [ ] Phase 6: API Key Service
-- [ ] Initialize `backend/api-key-service` on port 8084.
-- [ ] Create Flyway migrations for `api_keys`.
-- [ ] Implement `ash_live_{prefix}_{secret}` cryptographic generator.
-- [ ] Store SHA-256 hashes, return raw key once.
-- [ ] Synchronize keys to Redis cache (`apikey:auth:{keyHash}`).
-- [ ] Implement key rotation and revocation.
-- [ ] Write automated tests and Postman collection.
-- [ ] Git commit: `feat(apikey): implement api key service with sha256 hashing, redis sync, and subscription binding`.
+### [x] Phase 6: API Key Service
+- [x] Initialize `backend/api-key-service` on port 8084.
+- [x] Create Flyway migrations for `api_keys`.
+- [x] Implement `ash_live_{prefix}_{secret}` cryptographic generator.
+- [x] Store SHA-256 hashes, return raw key once.
+- [x] Synchronize keys to Redis cache (`apikey:auth:{keyHash}`).
+- [x] Implement key rotation and revocation.
+- [x] Write automated tests and Postman collection.
+- [x] Git commit: `feat(apikey): implement api key service with sha256 hashing, redis sync, and subscription binding`.
 
 ---
 

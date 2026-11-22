@@ -109,3 +109,6 @@ data/
 # IDE files
 .vscode/
 .idea/
+
+# Third-party collections
+postman/collections/SpringBoot-Vehicle Request Managment/

@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{apiKeyUrl}}/api/v1/internal/keys/verify"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "apiKey": "{{apiKey}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Key validation flag is boolean", function () {
+          var json = pm.response.json();
+          pm.expect(typeof json.valid).to.eql("boolean");
+      });
+    language: text/javascript
+order: 1000

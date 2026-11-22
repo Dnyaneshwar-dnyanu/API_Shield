@@ -24,6 +24,7 @@
 		<module>api-registry-service</module>
 		<module>subscription-service</module>
 		<module>payment-service</module>
+		<module>api-key-service</module>
 	</modules>
 
 	<properties>

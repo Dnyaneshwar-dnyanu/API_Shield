@@ -1,0 +1,2 @@
+$kind: collection
+description: API Key Service endpoints managing cryptographic key generation, SHA-256 storage, Redis synchronization, revocation, and Gateway fallback verification.

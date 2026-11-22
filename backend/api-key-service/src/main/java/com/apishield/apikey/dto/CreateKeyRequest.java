@@ -1,0 +1,23 @@
+package com.apishield.apikey.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CreateKeyRequest {
+
+    @NotBlank(message = "API Key name is required")
+    private String name;
+
+    @NotBlank(message = "API ID is required")
+    private String apiId;
+
+    @NotBlank(message = "Subscription ID is required")
+    private String subscriptionId;
+}

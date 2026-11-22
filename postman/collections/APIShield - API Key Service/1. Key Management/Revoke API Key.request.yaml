@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{apiKeyUrl}}/api/v1/keys/{{apiKeyId}}/revoke"
+method: POST
+headers:
+  Content-Type: application/json
+  X-User-Id: "{{userId}}"
+body:
+  type: text
+  content: |-
+    {
+      "reason": "Developer rotated keys"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Status is REVOKED", function () {
+          var json = pm.response.json();
+          pm.expect(json.status).to.eql("REVOKED");
+      });
+    language: text/javascript
+order: 4000
