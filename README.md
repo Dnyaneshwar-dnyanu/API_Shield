@@ -119,3 +119,10 @@ cd backend/user-service
 ../mvnw spring-boot:run
 # User Service API: http://localhost:8081
 ```
+
+#### Run React Frontend
+```bash
+cd frontend
+npm run dev
+# Frontend Portal: http://localhost:5173
+```
