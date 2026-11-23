@@ -1,0 +1,2 @@
+$kind: collection
+description: Analytics Service endpoints for Owner overview metrics, API timeseries charts, developer quota tracking, and debug request logs.

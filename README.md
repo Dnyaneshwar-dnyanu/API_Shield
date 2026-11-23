@@ -94,7 +94,7 @@ For complete technical specifications, review the architecture documents:
 
 #### Build Backend Microservices
 ```bash
-# Build all backend modules and execute test suite (221 tests)
+# Build all backend modules and execute test suite (237 tests)
 cd backend
 ./mvnw clean test
 ```

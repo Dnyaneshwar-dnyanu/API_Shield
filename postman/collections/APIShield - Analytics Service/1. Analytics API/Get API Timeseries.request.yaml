@@ -1,0 +1,5 @@
+$kind: request
+name: Get API Timeseries
+request:
+  method: GET
+  url: '{{analyticsUrl}}/api/v1/analytics/owner/apis/{{apiId}}/timeseries?days=7'

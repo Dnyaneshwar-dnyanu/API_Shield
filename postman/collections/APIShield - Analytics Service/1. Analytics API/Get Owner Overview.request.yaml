@@ -1,0 +1,8 @@
+$kind: request
+name: Get Owner Overview
+request:
+  method: GET
+  url: '{{analyticsUrl}}/api/v1/analytics/owner/overview?days=30'
+  headers:
+    - key: X-User-Id
+      value: '{{userId}}'

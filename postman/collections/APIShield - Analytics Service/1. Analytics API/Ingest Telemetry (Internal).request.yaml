@@ -1,0 +1,23 @@
+$kind: request
+name: Ingest Telemetry (Internal)
+request:
+  method: POST
+  url: '{{analyticsUrl}}/api/v1/analytics/telemetry/ingest'
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: X-Internal-Token
+      value: '{{internalToken}}'
+  body:
+    type: json
+    content: |-
+      {
+        "correlationId": "test-corr-101",
+        "apiId": "api-weather-1",
+        "apiSlug": "weather-api",
+        "developerId": "dev-100",
+        "statusCode": 200,
+        "responseTimeMs": 45,
+        "httpMethod": "GET",
+        "endpointPath": "/v1/weather/current"
+      }

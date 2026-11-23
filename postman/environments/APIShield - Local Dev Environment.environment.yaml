@@ -46,3 +46,5 @@ values:
     value: 'http://localhost:8086'
   - key: notificationId
     value: ''
+  - key: analyticsUrl
+    value: 'http://localhost:8087'

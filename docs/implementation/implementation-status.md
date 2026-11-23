@@ -3,8 +3,8 @@
 This document tracks the real-time implementation status of the APIShield platform across all microservices, frontend applications, infrastructure, automated tests, and Postman collections.
 
 > **Last Updated:** 2026-11-23  
-> **Current Phase:** Phase 8A (Notification Service: Event-Driven Transactional Engine & Alerts) — COMPLETED & VERIFIED  
-> **Next Target:** Phase 8B (Analytics Service: Kafka Telemetry Rollup & Metrics Engine)  
+> **Current Phase:** Phase 8 (Notification & Analytics Services) — COMPLETED & VERIFIED  
+> **Next Target:** Phase 9 (React Frontend: Owner, Developer & Admin Portals)  
 
 ---
 
@@ -12,12 +12,12 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 | Layer / Component | Target Services / Modules | Completed & Verified | In Progress | Pending | Status |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Backend Services** | 9 microservices + common | 8 (`user-service`, `discovery-server`, `api-registry-service`, `subscription-service`, `payment-service`, `api-key-service`, `api-gateway`, `notification-service` + `common`) | 0 | 2 | `80% Complete` |
+| **Backend Services** | 9 microservices + common | 9 (`user-service`, `discovery-server`, `api-registry-service`, `subscription-service`, `payment-service`, `api-key-service`, `api-gateway`, `notification-service`, `analytics-service` + `common`) | 0 | 0 | `100% Complete` |
 | **Infrastructure** | Docker, MySQL, Redis, Kafka, Eureka | 5 (All core infra ready) | 0 | 0 | `100% Configured & Verified` |
 | **Frontend** | React SPA (Owner, Dev, Admin) | 0 | 0 | 1 | `Pending Phase 9` |
 | **Architecture & Docs** | Specifications & Diagrams | 6 docs complete | 0 | 0 | `100% Complete` |
-| **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 221 tests passing | 0 | Pending others | `221 Passing (100%)` |
-| **Postman Collections** | Postman API collections | 7 collections (64 requests) | 0 | Pending others | `Verified` |
+| **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 237 tests passing | 0 | 0 | `237 Passing (100%)` |
+| **Postman Collections** | Postman API collections | 8 collections (71 requests) | 0 | 0 | `Verified` |
 
 ---
 
@@ -178,6 +178,18 @@ This document tracks the real-time implementation status of the APIShield platfo
   - [x] Automated test suite: **24 tests passing** (unit tests, consumers, dispatcher, template engine, context bootstrap, and MockMvc integration tests).
   - [x] Postman collection: 6 requests verified with environment variable bindings.
 
+- **Analytics Service (`backend/analytics-service`):**
+  - [x] Initialized `backend/analytics-service` on port `8087`.
+  - [x] Database-per-service isolation: Flyway migrations for `request_logs` and `usage_statistics` tables (`apishield_analytics` schema).
+  - [x] High-throughput telemetry Kafka listener consuming from `apishield.gateway.analytics`.
+  - [x] Atomic usage rollup aggregation engine with rolling average latency and status code breakdowns.
+  - [x] Owner overview analytics (`GET /api/v1/analytics/owner/overview`) with p95 latency and error rate calculations.
+  - [x] API timeseries chart data (`GET /api/v1/analytics/owner/apis/{apiId}/timeseries`).
+  - [x] Developer quota tracker (`GET /api/v1/analytics/developer/quota`) and debug request history logs (`GET /api/v1/analytics/developer/logs`).
+  - [x] Internal secured telemetry ingestion (`POST /api/v1/analytics/telemetry/ingest`) via `X-Internal-Token`.
+  - [x] Automated test suite: **16 tests passing** (unit tests, consumers, ingestion service, query service, context bootstrap, and MockMvc integration tests).
+  - [x] Postman collection: 7 requests verified with environment variable bindings.
+
 - **Documentation (`docs/`):**
   - [x] Complete architecture documentation (`overview.md`, `microservices.md`, `database-design.md`, `communication.md`, `request-flows.md`, `security.md`).
   - [x] Implementation roadmap (`docs/implementation/implementation-roadmap.md`).
@@ -188,8 +200,6 @@ This document tracks the real-time implementation status of the APIShield platfo
 ### 4. NOT IMPLEMENTED
 *The following components and services do not exist yet in the codebase:*
 
-- **Microservices:**
-  - [ ] Analytics Service (`backend/analytics-service`).
 - **Frontend:**
   - [ ] React 18+ Single Page Application (`frontend/`).
   - [ ] Developer Marketplace & Portal.
@@ -311,12 +321,14 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 ---
 
-### [ ] Phase 8B: Analytics Service
-- [ ] Initialize `backend/analytics-service` on port 8087.
-- [ ] Ingest telemetry from Kafka into MySQL rollups.
-- [ ] Implement Owner, Dev, and Admin analytics endpoints.
-- [ ] Write automated tests and Postman collection.
-- [ ] Git commit: `feat(analytics): implement request analytics rollup engine and aggregation endpoints`.
+### [x] Phase 8B: Analytics Service
+- [x] Initialize `backend/analytics-service` on port 8087.
+- [x] Create Flyway migrations for `request_logs` and `usage_statistics` (`apishield_analytics` schema).
+- [x] Ingest telemetry from Kafka (`apishield.gateway.analytics`) into MySQL rollups.
+- [x] Implement Owner overview, API timeseries, Developer quota, and Developer request log endpoints.
+- [x] Implement internal secured telemetry ingestion endpoint with token validation.
+- [x] Write automated tests (16 tests passing) and Postman collection.
+- [x] Git commit: `feat(analytics): implement high-throughput telemetry ingestion, metrics rollup engine, and dashboard analytics`.
 
 ---
 

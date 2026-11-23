@@ -1,0 +1,5 @@
+$kind: request
+name: Actuator Health
+request:
+  method: GET
+  url: '{{analyticsUrl}}/actuator/health'
