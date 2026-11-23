@@ -10,8 +10,8 @@ spring:
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:apishield_user}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
-    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:apishield_user}}
-    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:user_svc}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:user_svc_password}}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
