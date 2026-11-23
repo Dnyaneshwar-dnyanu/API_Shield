@@ -25,6 +25,7 @@
 		<module>subscription-service</module>
 		<module>payment-service</module>
 		<module>api-key-service</module>
+		<module>api-gateway</module>
 	</modules>
 
 	<properties>

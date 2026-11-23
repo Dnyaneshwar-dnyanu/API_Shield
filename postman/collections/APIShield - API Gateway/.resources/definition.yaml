@@ -1,0 +1,2 @@
+$kind: collection
+description: Edge API Gateway endpoints for Control Plane routing, Data Plane API proxying, Redis token bucket rate limiting, and monthly quota enforcement.

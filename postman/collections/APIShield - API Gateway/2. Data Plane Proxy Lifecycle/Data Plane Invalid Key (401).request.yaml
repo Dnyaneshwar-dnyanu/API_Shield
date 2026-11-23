@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{gatewayUrl}}/gateway/{{apiSlug}}/data"
+method: GET
+headers:
+  X-API-Key: "ash_live_invalid_key_value_12345"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 401 Unauthorized", function () {
+          pm.response.to.have.status(401);
+      });
+      pm.test("RFC 7807 Problem Detail returned for invalid key", function () {
+          var json = pm.response.json();
+          pm.expect(json.title).to.eql("Invalid API Key");
+          pm.expect(json.status).to.eql(401);
+      });
+    language: text/javascript
+order: 3000

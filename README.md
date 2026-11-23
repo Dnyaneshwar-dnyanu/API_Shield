@@ -94,9 +94,16 @@ For complete technical specifications, review the architecture documents:
 
 #### Build Backend Microservices
 ```bash
-# Build all backend modules and execute test suite (108 tests)
+# Build all backend modules and execute test suite (212 tests)
 cd backend
 ./mvnw clean test
+```
+
+#### Run Edge API Gateway
+```bash
+cd backend/api-gateway
+../mvnw spring-boot:run
+# API Gateway: http://localhost:8080
 ```
 
 #### Run Eureka Discovery Server

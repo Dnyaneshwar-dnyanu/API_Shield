@@ -1,0 +1,35 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: api-gateway-test
+  main:
+    allow-bean-definition-overriding: true
+  cloud:
+    compatibility-verifier:
+      enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: data-plane-proxy
+          uri: http://localhost:8089
+          predicates:
+            - Path=/gateway/{apiSlug}/**
+          filters:
+            - name: DataPlane
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+apishield:
+  gateway:
+    internal-secret: test-internal-secret-token-key-32bytes-min!
+    services:
+      registry-service-url: http://localhost:8082
+      api-key-service-url: http://localhost:8084

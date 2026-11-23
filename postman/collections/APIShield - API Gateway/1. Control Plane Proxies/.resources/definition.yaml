@@ -1,0 +1,2 @@
+$kind: folder
+description: Control Plane proxy endpoints forwarded to downstream services via Eureka Service Discovery.

@@ -1,0 +1,2 @@
+$kind: folder
+description: Data Plane proxy endpoints (/gateway/{apiSlug}/**) with 9-phase proxy pipeline, Redis rate limiting, quota validation, header injection, and RFC 7807 problem responses.

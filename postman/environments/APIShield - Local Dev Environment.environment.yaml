@@ -40,3 +40,5 @@ values:
     value: ''
   - key: apiKey
     value: ''
+  - key: gatewayUrl
+    value: 'http://localhost:8080'

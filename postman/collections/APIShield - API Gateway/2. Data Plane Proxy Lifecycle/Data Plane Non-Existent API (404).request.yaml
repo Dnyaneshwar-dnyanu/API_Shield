@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{gatewayUrl}}/gateway/non-existent-api-slug-9999/data"
+method: GET
+headers:
+  X-API-Key: "{{apiKey}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 404 Not Found", function () {
+          pm.response.to.have.status(404);
+      });
+      pm.test("RFC 7807 Problem Detail returned for unknown API slug", function () {
+          var json = pm.response.json();
+          pm.expect(json.title).to.eql("API Not Found");
+          pm.expect(json.status).to.eql(404);
+      });
+    language: text/javascript
+order: 4000

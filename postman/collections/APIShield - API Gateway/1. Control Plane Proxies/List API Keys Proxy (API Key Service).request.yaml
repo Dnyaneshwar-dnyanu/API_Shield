@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{gatewayUrl}}/api/v1/keys"
+method: GET
+headers:
+  Authorization: "Bearer {{accessToken}}"
+  X-User-Id: "{{userId}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Gateway forwards to api-key-service with 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+    language: text/javascript
+order: 5000

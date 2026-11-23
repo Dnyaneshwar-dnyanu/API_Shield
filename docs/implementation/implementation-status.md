@@ -2,9 +2,9 @@
 
 This document tracks the real-time implementation status of the APIShield platform across all microservices, frontend applications, infrastructure, automated tests, and Postman collections.
 
-> **Last Updated:** 2026-11-21  
-> **Current Phase:** Phase 4 (Subscription & Billing Lifecycle Service) — COMPLETED & VERIFIED  
-> **Next Target:** Phase 5 (Payment Service: Razorpay Integration) — PENDING USER APPROVAL  
+> **Last Updated:** 2026-11-23  
+> **Current Phase:** Phase 7 (Edge API Gateway: Reverse Proxy & Rate Limiter) — COMPLETED & VERIFIED  
+> **Next Target:** Phase 8 (Notification & Analytics Services) — PENDING USER APPROVAL  
 
 ---
 
@@ -12,12 +12,12 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 | Layer / Component | Target Services / Modules | Completed & Verified | In Progress | Pending | Status |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Backend Services** | 9 microservices + common | 4 (`user-service`, `discovery-server`, `api-registry-service`, `subscription-service` + `common`) | 0 | 6 | `40% Complete` |
+| **Backend Services** | 9 microservices + common | 7 (`user-service`, `discovery-server`, `api-registry-service`, `subscription-service`, `payment-service`, `api-key-service`, `api-gateway` + `common`) | 0 | 3 | `70% Complete` |
 | **Infrastructure** | Docker, MySQL, Redis, Kafka, Eureka | 5 (All core infra ready) | 0 | 0 | `100% Configured & Verified` |
 | **Frontend** | React SPA (Owner, Dev, Admin) | 0 | 0 | 1 | `Pending Phase 9` |
 | **Architecture & Docs** | Specifications & Diagrams | 6 docs complete | 0 | 0 | `100% Complete` |
-| **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 174 tests passing | 0 | Pending others | `174 Passing (100%)` |
-| **Postman Collections** | Postman API collections | 4 collections (47 requests) | 0 | Pending others | `Verified` |
+| **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 212 tests passing | 0 | Pending others | `212 Passing (100%)` |
+| **Postman Collections** | Postman API collections | 6 collections (58 requests) | 0 | Pending others | `Verified` |
 
 ---
 
@@ -142,6 +142,23 @@ This document tracks the real-time implementation status of the APIShield platfo
   - [x] Automated test suite: **12 tests passing** (context boot, key generation, entropy, controller integration, fallback verification, event consumer).
   - [x] Postman collection: 6 requests organized across 2 functional folders with assertions.
 
+- **Edge API Gateway (`backend/api-gateway`):**
+  - [x] High-performance reactive edge proxy built on Spring Cloud Gateway (Netty, Reactor WebFlux), database-less architecture.
+  - [x] Control Plane Dynamic Routing: Proxies `/api/v1/auth/**`, `/api/v1/users/**`, `/api/v1/apis/**`, `/api/v1/catalog/**`, `/api/v1/subscriptions/**`, `/api/v1/payments/**`, and `/api/v1/keys/**` downstream via Eureka service discovery (`lb://`).
+  - [x] 9-Phase Data Plane Proxy Pipeline (`/gateway/{apiSlug}/**`):
+    - Phase 1: `CorrelationIdGlobalFilter` guarantees propagation of `X-Correlation-ID`.
+    - Phase 2: Resolves target API metadata from Redis cache (`api:metadata:{slug}`), with fallback to `api-registry-service` (`/api/v1/internal/apis/resolve/{slug}`). Short-circuits with RFC 7807 404 if API not found or inactive.
+    - Phase 3: Extracts `X-API-Key` header, hashes with SHA-256, and verifies against Redis cache (`apikey:auth:{keyHash}`) with fallback to `api-key-service` (`/api/v1/internal/keys/verify`). Short-circuits with RFC 7807 401 if key missing or invalid.
+    - Phase 4: Validates key's subscription matches target API ID; short-circuits with RFC 7807 403 Forbidden on API mismatch.
+    - Phase 5: Executes atomic Redis token bucket Lua rate limiter (`rate_limit:{keyId}`); short-circuits with RFC 7807 429 Too Many Requests and `Retry-After: 1` header upon burst limit breach.
+    - Phase 6: Executes monthly quota check in Redis (`quota:{keyId}:{yyyyMM}`); short-circuits with RFC 7807 429 on monthly allocation exhaustion.
+    - Phase 7: Strips client `X-API-Key` and `X-Internal-Token`, rewrites URI to backend sub-path, and injects secure `X-Internal-Token` and `X-Developer-Id`.
+    - Phase 8: Routes downstream directly via Netty client to upstream target base URL (`GATEWAY_REQUEST_URL_ATTR`).
+    - Phase 9: Emits asynchronous telemetry events (`GatewayTelemetryEvent`) to Kafka topic `apishield.gateway.analytics` non-blockingly upon response completion.
+  - [x] Spring Boot 4 Compatibility Bridges: Compatibility bridge interfaces for `WebServerApplicationContext` and `PathPatternParser` in `common`.
+  - [x] Automated test suite: **24 tests passing** (context boot, global filter, 9 data-plane pipeline tests, resolution service, verification service, rate limit Lua service, quota service).
+  - [x] Postman collection: 11 requests organized across 2 functional folders (Control Plane proxies and Data Plane proxy scenarios).
+
 ---
 
 ### 2. IMPLEMENTED BUT NOT VERIFIED
@@ -161,7 +178,6 @@ This document tracks the real-time implementation status of the APIShield platfo
 *The following components and services do not exist yet in the codebase:*
 
 - **Microservices:**
-  - [ ] Edge API Gateway (`backend/api-gateway`).
   - [ ] Notification Service (`backend/notification-service`).
   - [ ] Analytics Service (`backend/analytics-service`).
 - **Frontend:**
@@ -260,15 +276,15 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 ---
 
-### [ ] Phase 7: Edge API Gateway (Reverse Proxy & Rate Limiter)
-- [ ] Initialize `backend/api-gateway` on port 8080 (Spring Cloud Gateway).
-- [ ] Implement Control Plane routing via Eureka.
-- [ ] Implement 9-Phase Data Plane proxy filter (`/gateway/{apiSlug}/**`).
-- [ ] Implement Redis token bucket burst rate limiter (Lua script).
-- [ ] Implement Redis monthly quota counter.
-- [ ] Implement asynchronous Kafka telemetry publishing.
-- [ ] Write reactive integration tests and Postman collection.
-- [ ] Git commit: `feat(gateway): implement reactive api gateway with 9-phase proxy lifecycle, redis rate limiting, and kafka telemetry`.
+### [x] Phase 7: Edge API Gateway (Reverse Proxy & Rate Limiter)
+- [x] Initialize `backend/api-gateway` on port 8080 (Spring Cloud Gateway).
+- [x] Implement Control Plane routing via Eureka.
+- [x] Implement 9-Phase Data Plane proxy filter (`/gateway/{apiSlug}/**`).
+- [x] Implement Redis token bucket burst rate limiter (Lua script).
+- [x] Implement Redis monthly quota counter.
+- [x] Implement asynchronous Kafka telemetry publishing.
+- [x] Write reactive integration tests and Postman collection.
+- [x] Git commit: `feat(gateway): implement reactive edge api gateway with 9-phase proxy lifecycle, redis rate limiting, and kafka telemetry`.
 
 ---
 

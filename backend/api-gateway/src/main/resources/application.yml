@@ -1,0 +1,95 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  cloud:
+    compatibility-verifier:
+      enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        # User Service Control Plane Routes
+        - id: user-service-auth
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/auth/**
+        - id: user-service-users
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/**
+
+        # API Registry Service Control Plane Routes
+        - id: api-registry-service-apis
+          uri: lb://api-registry-service
+          predicates:
+            - Path=/api/v1/apis/**
+        - id: api-registry-service-catalog
+          uri: lb://api-registry-service
+          predicates:
+            - Path=/api/v1/catalog/**
+
+        # Subscription Service Control Plane Routes
+        - id: subscription-service
+          uri: lb://subscription-service
+          predicates:
+            - Path=/api/v1/subscriptions/**
+
+        # Payment Service Control Plane Routes
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/v1/payments/**
+
+        # API Key Service Control Plane Routes
+        - id: api-key-service
+          uri: lb://api-key-service
+          predicates:
+            - Path=/api/v1/keys/**
+
+        # Data Plane Proxy Route (9-phase proxy pipeline)
+        - id: data-plane-proxy
+          uri: no://op
+          predicates:
+            - Path=/gateway/{apiSlug}/**
+          filters:
+            - name: DataPlane
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+apishield:
+  gateway:
+    internal-secret: ${GATEWAY_INTERNAL_SECRET:apishield-internal-secret-token-key-32bytes-min!}
+    services:
+      registry-service-url: ${REGISTRY_SERVICE_URL:http://api-registry-service}
+      api-key-service-url: ${API_KEY_SERVICE_URL:http://api-key-service}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
