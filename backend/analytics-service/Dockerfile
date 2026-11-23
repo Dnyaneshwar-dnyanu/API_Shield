@@ -1,17 +1,19 @@
 # Stage 1: Build JAR using Maven
-FROM eclipse-adoptium:21-jdk-alpine AS builder
+FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 WORKDIR /build
 
 COPY pom.xml ./
 COPY common ./common
 COPY analytics-service ./analytics-service
 
-# Build analytics-service
-RUN apk add --no-cache maven && \
-    mvn clean package -pl common,analytics-service -DskipTests
+# Strip multi-module aggregator block so Maven treats this as standalone parent
+RUN sed -i '/<modules>/,/<\/modules>/d' pom.xml && \
+    mvn install -N -DskipTests && \
+    mvn install -f common/pom.xml -DskipTests && \
+    mvn package -f analytics-service/pom.xml -DskipTests
 
 # Stage 2: Minimal Distroless / JRE Runtime
-FROM eclipse-adoptium:21-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 RUN addgroup -S apishield && adduser -S apishield -G apishield
