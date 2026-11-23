@@ -42,3 +42,7 @@ values:
     value: ''
   - key: gatewayUrl
     value: 'http://localhost:8080'
+  - key: notificationUrl
+    value: 'http://localhost:8086'
+  - key: notificationId
+    value: ''

@@ -1,0 +1,2 @@
+$kind: collection
+description: Notification Service endpoints for transactional direct dispatch, developer in-app alerts, read status, and unread metrics.

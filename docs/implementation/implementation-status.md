@@ -3,8 +3,8 @@
 This document tracks the real-time implementation status of the APIShield platform across all microservices, frontend applications, infrastructure, automated tests, and Postman collections.
 
 > **Last Updated:** 2026-11-23  
-> **Current Phase:** Phase 7 (Edge API Gateway: Reverse Proxy & Rate Limiter) — COMPLETED & VERIFIED  
-> **Next Target:** Phase 8 (Notification & Analytics Services) — PENDING USER APPROVAL  
+> **Current Phase:** Phase 8A (Notification Service: Event-Driven Transactional Engine & Alerts) — COMPLETED & VERIFIED  
+> **Next Target:** Phase 8B (Analytics Service: Kafka Telemetry Rollup & Metrics Engine)  
 
 ---
 
@@ -12,12 +12,12 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 | Layer / Component | Target Services / Modules | Completed & Verified | In Progress | Pending | Status |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Backend Services** | 9 microservices + common | 7 (`user-service`, `discovery-server`, `api-registry-service`, `subscription-service`, `payment-service`, `api-key-service`, `api-gateway` + `common`) | 0 | 3 | `70% Complete` |
+| **Backend Services** | 9 microservices + common | 8 (`user-service`, `discovery-server`, `api-registry-service`, `subscription-service`, `payment-service`, `api-key-service`, `api-gateway`, `notification-service` + `common`) | 0 | 2 | `80% Complete` |
 | **Infrastructure** | Docker, MySQL, Redis, Kafka, Eureka | 5 (All core infra ready) | 0 | 0 | `100% Configured & Verified` |
 | **Frontend** | React SPA (Owner, Dev, Admin) | 0 | 0 | 1 | `Pending Phase 9` |
 | **Architecture & Docs** | Specifications & Diagrams | 6 docs complete | 0 | 0 | `100% Complete` |
-| **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 212 tests passing | 0 | Pending others | `212 Passing (100%)` |
-| **Postman Collections** | Postman API collections | 6 collections (58 requests) | 0 | Pending others | `Verified` |
+| **Automated Tests** | Unit, MockMvc, WebTestClient, E2E | 221 tests passing | 0 | Pending others | `221 Passing (100%)` |
+| **Postman Collections** | Postman API collections | 7 collections (64 requests) | 0 | Pending others | `Verified` |
 
 ---
 
@@ -167,6 +167,17 @@ This document tracks the real-time implementation status of the APIShield platfo
 ---
 
 ### 3. PARTIALLY IMPLEMENTED
+- **Notification Service (`backend/notification-service`):**
+  - [x] Initialized `backend/notification-service` on port `8086`.
+  - [x] Database-per-service isolation: Flyway migrations for `notifications` table (`id`, `recipient_user_id`, `recipient_email`, `channel`, `template_key`, `title`, `content_payload`, `status`, `is_read`, `sent_at`, `retry_count`, `error_message`, `created_at`).
+  - [x] Multi-channel dispatcher supporting `EMAIL` (Spring Mail / Mock dispatch) and `IN_APP` alert storage.
+  - [x] Template engine for `WELCOME_EMAIL`, `PAYMENT_SUCCESS`, `PAYMENT_FAILED`, `SUBSCRIPTION_ACTIVATED`, `SUBSCRIPTION_CANCELLED`, `KEY_REVOKED`, and `DIRECT_ALERT`.
+  - [x] Kafka consumer listeners on `apishield.user.events`, `apishield.payment.events`, `apishield.subscription.events`, and `apishield.apikey.events`.
+  - [x] Internal authenticated API (`POST /api/v1/notifications/send-direct`) with `X-Internal-Token` security.
+  - [x] Developer notification management endpoints (`GET /api/v1/notifications/my`, `PUT /api/v1/notifications/{id}/read`, `GET /api/v1/notifications/unread-count`).
+  - [x] Automated test suite: **24 tests passing** (unit tests, consumers, dispatcher, template engine, context bootstrap, and MockMvc integration tests).
+  - [x] Postman collection: 6 requests verified with environment variable bindings.
+
 - **Documentation (`docs/`):**
   - [x] Complete architecture documentation (`overview.md`, `microservices.md`, `database-design.md`, `communication.md`, `request-flows.md`, `security.md`).
   - [x] Implementation roadmap (`docs/implementation/implementation-roadmap.md`).
@@ -178,7 +189,6 @@ This document tracks the real-time implementation status of the APIShield platfo
 *The following components and services do not exist yet in the codebase:*
 
 - **Microservices:**
-  - [ ] Notification Service (`backend/notification-service`).
   - [ ] Analytics Service (`backend/analytics-service`).
 - **Frontend:**
   - [ ] React 18+ Single Page Application (`frontend/`).
@@ -288,14 +298,25 @@ This document tracks the real-time implementation status of the APIShield platfo
 
 ---
 
-### [ ] Phase 8: Analytics Service & Notification Service
+### [x] Phase 8A: Notification Service
+- [x] Initialize `backend/notification-service` on port 8086.
+- [x] Create Flyway migrations for `notifications` table (`apishield_notification` schema).
+- [x] Implement multi-channel dispatcher (`EMAIL`, `IN_APP`, `WEBHOOK`).
+- [x] Implement dynamic templating engine for welcome, billing, subscription, and security events.
+- [x] Implement event listeners across Kafka topics (`user`, `payment`, `subscription`, `apikey`).
+- [x] Implement secured internal send-direct endpoint (`POST /api/v1/notifications/send-direct`).
+- [x] Implement user notification queries and mark-as-read endpoints.
+- [x] Write automated tests (24 tests passing) and Postman collection.
+- [x] Git commit: `feat(notification): implement event-driven notification service with email templating, kafka consumers, and in-app alerts`.
+
+---
+
+### [ ] Phase 8B: Analytics Service
 - [ ] Initialize `backend/analytics-service` on port 8087.
 - [ ] Ingest telemetry from Kafka into MySQL rollups.
 - [ ] Implement Owner, Dev, and Admin analytics endpoints.
-- [ ] Initialize `backend/notification-service` on port 8086.
-- [ ] Implement notification listeners for domain events.
-- [ ] Write automated tests and Postman collections.
-- [ ] Git commit: `feat(analytics-notification): implement analytics rollup engine and event-driven notification service`.
+- [ ] Write automated tests and Postman collection.
+- [ ] Git commit: `feat(analytics): implement request analytics rollup engine and aggregation endpoints`.
 
 ---
 

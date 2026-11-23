@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{notificationUrl}}/api/v1/notifications/send-direct"
+method: POST
+headers:
+  Content-Type: application/json
+  X-Internal-Token: "apishield-internal-secret-token-key-32bytes-min!"
+body:
+  type: text
+  content: |-
+    {
+      "recipientUserId": "{{userId}}",
+      "recipientEmail": "developer@apishield.io",
+      "channel": "EMAIL",
+      "templateKey": "DIRECT_ALERT",
+      "title": "Platform Scheduled Maintenance",
+      "contentPayload": "{\"message\":\"Maintenance window scheduled for Sunday 02:00 UTC\"}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test("Notification dispatched successfully", function () {
+          var json = pm.response.json();
+          pm.expect(json.id).to.be.a('string');
+          pm.expect(json.status).to.eql("SENT");
+          pm.environment.set('notificationId', json.id);
+      });
+    language: text/javascript
+order: 2000
