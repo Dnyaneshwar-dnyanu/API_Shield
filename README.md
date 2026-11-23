@@ -82,6 +82,30 @@ For complete technical specifications, review the architecture documents:
 
 ---
 
+---
+
+## Service Port Allocation Matrix
+
+| Service | Port | Protocol | Responsibilities |
+| :--- | :---: | :---: | :--- |
+| **API Gateway** | `8080` | HTTP / WS | Edge reverse proxy, token bucket rate limiter, JWT routing, Kafka telemetry |
+| **User Service** | `8081` | HTTP | Multi-tenant auth, BCrypt, JWT access/refresh rotation, RBAC, audit log |
+| **API Registry Service**| `8082` | HTTP | API registration, SSRF validator, tiered plans (Free/Pro), Redis warming |
+| **Subscription Service**| `8083` | HTTP | Developer plan subscriptions, lifecycle state machine, plan upgrade/cancel |
+| **API Key Service** | `8084` | HTTP | Cryptographic key generator (`ash_live_...`), SHA-256 storage, Redis cache |
+| **Payment Service** | `8085` | HTTP | Razorpay orders, billing invoices, webhook signature verification |
+| **Notification Service**| `8086` | HTTP | Multi-channel alerts (Email, In-App, Webhook), Kafka event consumers |
+| **Analytics Service** | `8087` | HTTP | Telemetry ingestion, time-series rollups, developer quota tracking |
+| **Discovery Server** | `8761` | HTTP | Netflix Eureka service discovery & cluster health registry |
+| **Frontend Portal** | `80` / `5173` | HTTP | React 18+ SPA (Owner console, Developer marketplace, Admin panel) |
+| **MySQL Database** | `3306` | TCP | 7 isolated logical schemas (Database-per-Service principle) |
+| **Redis Cache** | `6379` | TCP | Sliding-window token bucket Lua scripts, API key cache, active quotas |
+| **Apache Kafka** | `9092` | TCP | KRaft mode event streaming broker (7 canonical domain topics) |
+| **Prometheus** | `9090` | HTTP | Timeseries metric collector scraping Spring Boot Actuators |
+| **Grafana** | `3000` | HTTP | Pre-provisioned dashboards (Throughput, Latency P50-P99, Error rates) |
+
+---
+
 ## Prerequisites & Setup Guidelines
 
 ### Prerequisites
@@ -90,11 +114,64 @@ For complete technical specifications, review the architecture documents:
 - **Node.js:** Node 20 LTS & npm
 - **Container Engine:** Docker Engine 24+ and Docker Compose v2+
 
-### Quick Start & Local Development
+---
+
+## Deployment & Orchestration
+
+### 1. Full-Stack Docker Compose Orchestration
+Launch the entire platform (all 9 microservices, React SPA, MySQL, Redis, Kafka, Prometheus, and Grafana) with a single command:
+```bash
+docker compose -f infrastructure/docker/docker-compose.yml up -d
+```
+
+To view logs or monitor container status:
+```bash
+docker compose -f infrastructure/docker/docker-compose.yml ps
+docker compose -f infrastructure/docker/docker-compose.yml logs -f api-gateway
+```
+
+To gracefully stop the platform:
+```bash
+docker compose -f infrastructure/docker/docker-compose.yml down
+```
+
+---
+
+## Automated Testing & Benchmarking
+
+### Backend Multi-Module Reactor Regression Test
+Run the complete unit and integration test suite across all 11 Maven modules:
+```bash
+cd backend
+./mvnw clean test
+```
+*Current test status:* **237 / 237 automated tests passing** (0 failures, 0 errors, 0 skipped).
+
+### Automated End-to-End System Integration Test
+Execute the comprehensive 10-step platform lifecycle test suite:
+```bash
+# Standalone contract verification (runs without external dependencies)
+npm --prefix tests/e2e run test:mock
+
+# Live integration against running Docker / Local cluster
+npm --prefix tests/e2e run test:live
+
+# PowerShell wrapper
+powershell -ExecutionPolicy Bypass -File tests/e2e/e2e-business-journey.ps1 -Mode mock
+```
+
+### High-Throughput Gateway Benchmarking
+Benchmark the Edge Gateway throughput and latency percentiles (P50, P90, P95, P99):
+```bash
+node tests/e2e/benchmark.js http://localhost:8080/gateway/weather-api/current ash_live_test_key 100 10
+```
+
+---
+
+## Local Development (Running Individual Services)
 
 #### Build Backend Microservices
 ```bash
-# Build all backend modules and execute test suite (237 tests)
 cd backend
 ./mvnw clean test
 ```

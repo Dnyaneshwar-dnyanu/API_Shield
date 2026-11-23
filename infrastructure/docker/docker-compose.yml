@@ -17,8 +17,9 @@ volumes:
 
 services:
   # ============================================================================
-  # MySQL Database (Logical Multi-Schema Service Isolation)
+  # 1. CORE DATA & MESSAGING INFRASTRUCTURE
   # ============================================================================
+
   mysql:
     image: mysql:8.0
     container_name: apishield-mysql
@@ -39,9 +40,6 @@ services:
     networks:
       - apishield-network
 
-  # ============================================================================
-  # Redis Cache & In-Memory Rate Limiting Tier
-  # ============================================================================
   redis:
     image: redis:7.2-alpine
     container_name: apishield-redis
@@ -61,9 +59,6 @@ services:
     networks:
       - apishield-network
 
-  # ============================================================================
-  # Apache Kafka Broker (KRaft Mode - No Zookeeper Required)
-  # ============================================================================
   kafka:
     image: apache/kafka:3.7.0
     container_name: apishield-kafka
@@ -74,7 +69,7 @@ services:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${KAFKA_HOST:-localhost}:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${KAFKA_HOST:-kafka}:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
@@ -94,9 +89,6 @@ services:
     networks:
       - apishield-network
 
-  # ============================================================================
-  # Automated Kafka Topic Provisioning
-  # ============================================================================
   kafka-init-topics:
     image: apache/kafka:3.7.0
     container_name: apishield-kafka-init-topics
@@ -114,13 +106,272 @@ services:
     restart: "no"
 
   # ============================================================================
-  # Prometheus Timeseries Observability (Profile: monitoring)
+  # 2. SERVICE DISCOVERY & EDGE GATEWAY ROUTING
   # ============================================================================
+
+  discovery-server:
+    build:
+      context: ../../backend
+      dockerfile: discovery-server/Dockerfile
+    container_name: apishield-discovery-server
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8761/actuator/health | grep UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - apishield-network
+
+  api-gateway:
+    build:
+      context: ../../backend
+      dockerfile: api-gateway/Dockerfile
+    container_name: apishield-api-gateway
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    environment:
+      PORT: 8080
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:-d3f4u1t-s3cur3-256-b1t-jwt-s3cr3t-k3y-f0r-d3v3l0pm3nt-0nly!}
+      GATEWAY_INTERNAL_SECRET: ${GATEWAY_INTERNAL_SECRET:-apishield-internal-secret-token-key-32bytes-min!}
+      REGISTRY_SERVICE_URL: http://api-registry-service:8082
+      API_KEY_SERVICE_URL: http://api-key-service:8084
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - apishield-network
+
+  # ============================================================================
+  # 3. CONTROL PLANE MICROSERVICES
+  # ============================================================================
+
+  user-service:
+    build:
+      context: ../../backend
+      dockerfile: user-service/Dockerfile
+    container_name: apishield-user-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: apishield_user
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      JWT_SECRET: ${JWT_SECRET:-d3f4u1t-s3cur3-256-b1t-jwt-s3cr3t-k3y-f0r-d3v3l0pm3nt-0nly!}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - apishield-network
+
+  api-registry-service:
+    build:
+      context: ../../backend
+      dockerfile: api-registry-service/Dockerfile
+    container_name: apishield-api-registry-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: apishield_registry
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      JWT_SECRET: ${JWT_SECRET:-d3f4u1t-s3cur3-256-b1t-jwt-s3cr3t-k3y-f0r-d3v3l0pm3nt-0nly!}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - apishield-network
+
+  subscription-service:
+    build:
+      context: ../../backend
+      dockerfile: subscription-service/Dockerfile
+    container_name: apishield-subscription-service
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: apishield_subscription
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:-d3f4u1t-s3cur3-256-b1t-jwt-s3cr3t-k3y-f0r-d3v3l0pm3nt-0nly!}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - apishield-network
+
+  api-key-service:
+    build:
+      context: ../../backend
+      dockerfile: api-key-service/Dockerfile
+    container_name: apishield-api-key-service
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: apishield_apikey
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:-d3f4u1t-s3cur3-256-b1t-jwt-s3cr3t-k3y-f0r-d3v3l0pm3nt-0nly!}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - apishield-network
+
+  payment-service:
+    build:
+      context: ../../backend
+      dockerfile: payment-service/Dockerfile
+    container_name: apishield-payment-service
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: apishield_payment
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:-d3f4u1t-s3cur3-256-b1t-jwt-s3cr3t-k3y-f0r-d3v3l0pm3nt-0nly!}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - apishield-network
+
+  notification-service:
+    build:
+      context: ../../backend
+      dockerfile: notification-service/Dockerfile
+    container_name: apishield-notification-service
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: apishield_notification
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:-d3f4u1t-s3cur3-256-b1t-jwt-s3cr3t-k3y-f0r-d3v3l0pm3nt-0nly!}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - apishield-network
+
+  analytics-service:
+    build:
+      context: ../../backend
+      dockerfile: analytics-service/Dockerfile
+    container_name: apishield-analytics-service
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: apishield_analytics
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:-d3f4u1t-s3cur3-256-b1t-jwt-s3cr3t-k3y-f0r-d3v3l0pm3nt-0nly!}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - apishield-network
+
+  # ============================================================================
+  # 4. FRONTEND SINGLE PAGE APPLICATION
+  # ============================================================================
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    container_name: apishield-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - apishield-network
+
+  # ============================================================================
+  # 5. OBSERVABILITY & TELEMETRY STACK
+  # ============================================================================
+
   prometheus:
     image: prom/prometheus:v2.51.0
     container_name: apishield-prometheus
-    profiles:
-      - monitoring
+    restart: unless-stopped
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"
     volumes:
@@ -128,20 +379,18 @@ services:
     networks:
       - apishield-network
 
-  # ============================================================================
-  # Grafana Dashboard Telemetry (Profile: monitoring)
-  # ============================================================================
   grafana:
     image: grafana/grafana:10.4.0
     container_name: apishield-grafana
-    profiles:
-      - monitoring
+    restart: unless-stopped
     ports:
       - "${GRAFANA_PORT:-3000}:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
     volumes:
       - ../monitoring/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ../monitoring/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ../monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards/apishield:ro
       - grafana-data:/var/lib/grafana
     depends_on:
       - prometheus

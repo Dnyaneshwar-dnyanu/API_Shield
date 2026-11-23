@@ -1,0 +1,16 @@
+{
+  "name": "apishield-e2e-tests",
+  "version": "1.0.0",
+  "description": "APIShield End-to-End System Integration and Benchmarking Test Suite",
+  "main": "e2e-runner.js",
+  "scripts": {
+    "test": "node e2e-runner.js",
+    "test:mock": "node e2e-runner.js --mock",
+    "test:live": "node e2e-runner.js",
+    "benchmark": "node benchmark.js",
+    "mock:server": "node mock-target-server.js"
+  },
+  "keywords": ["apishield", "microservices", "e2e", "integration-tests", "benchmark", "rate-limiting"],
+  "author": "APIShield Team",
+  "license": "MIT"
+}
