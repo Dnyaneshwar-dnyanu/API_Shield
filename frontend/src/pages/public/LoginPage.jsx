@@ -19,7 +19,7 @@ export const LoginPage = () => {
 
     try {
       const user = await login(email, password);
-      if (user.role === 'OWNER') {
+      if (user.role === 'OWNER' || user.role === 'API_OWNER') {
         navigate('/owner/dashboard');
       } else if (user.role === 'ADMIN') {
         navigate('/admin/dashboard');

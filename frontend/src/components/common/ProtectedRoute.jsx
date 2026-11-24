@@ -24,7 +24,7 @@ export const ProtectedRoute = ({ allowedRoles = [] }) => {
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
     // Redirect to respective dashboard if role doesn't match
-    if (userRole === 'OWNER') return <Navigate to="/owner/dashboard" replace />;
+    if (userRole === 'OWNER' || userRole === 'API_OWNER') return <Navigate to="/owner/dashboard" replace />;
     if (userRole === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
     return <Navigate to="/dev/dashboard" replace />;
   }

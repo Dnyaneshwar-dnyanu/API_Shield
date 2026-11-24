@@ -53,7 +53,7 @@ export function App() {
           </Route>
 
           {/* Owner Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['OWNER', 'API_OWNER', 'ADMIN']} />}>
             <Route path="/owner/dashboard" element={<OwnerDashboard />} />
             <Route path="/owner/apis" element={<OwnerApisPage />} />
             <Route path="/owner/apis/new" element={<CreateApiPage />} />

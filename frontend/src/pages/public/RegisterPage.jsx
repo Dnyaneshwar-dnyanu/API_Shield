@@ -36,7 +36,7 @@ export const RegisterPage = () => {
         lastName: lName,
         email: email.trim().toLowerCase(),
         password,
-        role: 'DEVELOPER',
+        role: role
       });
       setRegistered(true);
     } catch (err) {

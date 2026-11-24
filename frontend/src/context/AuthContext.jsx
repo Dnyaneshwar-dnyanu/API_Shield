@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const role = user?.role || (user ? 'DEVELOPER' : null);
-  const isOwner = role === 'OWNER';
+  const isOwner = role === 'OWNER' || role === 'API_OWNER';
   const isDeveloper = role === 'DEVELOPER';
   const isAdmin = role === 'ADMIN';
 
