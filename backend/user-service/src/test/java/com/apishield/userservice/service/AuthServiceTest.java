@@ -180,15 +180,28 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Throws InvalidRoleException when client attempts to self-assign API_OWNER role")
-    void register_apiOwnerRole_throwsInvalidRoleException() {
+    @DisplayName("Successfully register when API_OWNER role is explicitly requested")
+    void register_apiOwnerRole_success() {
         validRegisterRequest.setRole("API_OWNER");
 
-        assertThatThrownBy(() -> authService.register(validRegisterRequest))
-                .isInstanceOf(InvalidRoleException.class)
-                .hasMessageContaining("does not allow self-assignment");
+        User savedUser = User.builder()
+                .id(UUID.randomUUID())
+                .firstName(validRegisterRequest.getFirstName())
+                .lastName(validRegisterRequest.getLastName())
+                .email(validRegisterRequest.getEmail())
+                .passwordHash("encoded_pwd")
+                .role(Role.API_OWNER)
+                .accountStatus(com.apishield.userservice.enums.AccountStatus.ACTIVE)
+                .emailVerified(false)
+                .build();
 
-        verify(userRepository, never()).save(any(User.class));
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded_pwd");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        UserResponse response = authService.register(validRegisterRequest);
+
+        assertThat(response.getRole()).isEqualTo(Role.API_OWNER);
     }
 
     @Test

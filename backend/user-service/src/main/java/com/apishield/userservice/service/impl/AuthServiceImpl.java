@@ -126,7 +126,7 @@ public class AuthServiceImpl implements AuthService {
 
         String normalizedRole = requestedRole.trim().toUpperCase();
 
-        if (Role.ADMIN.name().equals(normalizedRole) || Role.API_OWNER.name().equals(normalizedRole)) {
+        if (Role.ADMIN.name().equals(normalizedRole)) {
             throw new InvalidRoleException("Public registration does not allow self-assignment of role: " + requestedRole);
         }
 
@@ -134,7 +134,11 @@ public class AuthServiceImpl implements AuthService {
             return Role.DEVELOPER;
         }
 
-        throw new InvalidRoleException("Invalid role specified: " + requestedRole + ". Allowed registration role is DEVELOPER.");
+        if (Role.API_OWNER.name().equals(normalizedRole) || "OWNER".equals(normalizedRole)) {
+            return Role.API_OWNER;
+        }
+
+        throw new InvalidRoleException("Invalid role specified: " + requestedRole + ". Allowed registration roles are DEVELOPER and API_OWNER.");
     }
 
     private UserResponse mapToUserResponse(User user) {

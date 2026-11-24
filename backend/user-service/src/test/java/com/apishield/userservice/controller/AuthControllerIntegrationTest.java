@@ -153,8 +153,8 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should reject self-assigned API_OWNER role with 400 Bad Request")
-    void testRejectApiOwnerRoleSelfAssignment() throws Exception {
+    @DisplayName("Should successfully register API_OWNER role with 201 Created")
+    void testRegisterApiOwnerRoleSuccess() throws Exception {
         RegisterRequest request = RegisterRequest.builder()
                 .firstName("Owner")
                 .lastName("User")
@@ -166,9 +166,11 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value(containsString("does not allow self-assignment")));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role").value("API_OWNER"))
+                .andExpect(jsonPath("$.email").value("owner.user@apishield.io"));
+
+        assertThat(userRepository.findByEmail("owner.user@apishield.io")).isPresent();
     }
 
     @Test
