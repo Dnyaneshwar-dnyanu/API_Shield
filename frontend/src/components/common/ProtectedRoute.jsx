@@ -20,10 +20,12 @@ export const ProtectedRoute = ({ allowedRoles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
+  const userRole = user?.role || 'DEVELOPER';
+
+  if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
     // Redirect to respective dashboard if role doesn't match
-    if (user?.role === 'OWNER') return <Navigate to="/owner/dashboard" replace />;
-    if (user?.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
+    if (userRole === 'OWNER') return <Navigate to="/owner/dashboard" replace />;
+    if (userRole === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
     return <Navigate to="/dev/dashboard" replace />;
   }
 

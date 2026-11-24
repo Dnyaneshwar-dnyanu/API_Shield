@@ -7,7 +7,13 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('apishield_user');
-      return savedUser ? JSON.parse(savedUser) : null;
+      if (!savedUser) return null;
+      const parsed = JSON.parse(savedUser);
+      // Auto-heal missing role from earlier sessions
+      if (parsed && !parsed.role) {
+        parsed.role = 'DEVELOPER';
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -28,18 +34,27 @@ export const AuthProvider = ({ children }) => {
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
 
-    if (accessToken && !user) {
+    if (accessToken && (!user || !user.role)) {
       authApi.getProfile()
         .then((profile) => {
-          setUser(profile);
-          localStorage.setItem('apishield_user', JSON.stringify(profile));
+          const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ');
+          const userObj = {
+            id: profile.id,
+            email: profile.email,
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            name: fullName || profile.email?.split('@')[0],
+            role: profile.role || 'DEVELOPER',
+          };
+          setUser(userObj);
+          localStorage.setItem('apishield_user', JSON.stringify(userObj));
         })
         .catch(() => {
-          setUser(null);
-          setAccessToken(null);
-          localStorage.removeItem('apishield_access_token');
-          localStorage.removeItem('apishield_refresh_token');
-          localStorage.removeItem('apishield_user');
+          if (user && !user.role) {
+            const updated = { ...user, role: 'DEVELOPER' };
+            setUser(updated);
+            localStorage.setItem('apishield_user', JSON.stringify(updated));
+          }
         })
         .finally(() => setLoading(false));
     } else {
@@ -59,11 +74,15 @@ export const AuthProvider = ({ children }) => {
     }
     setAccessToken(data.accessToken);
 
+    const u = data.user || {};
+    const fullName = [u.firstName, u.lastName].filter(Boolean).join(' ');
     const userObj = {
-      id: data.userId,
-      email: data.email,
-      name: data.name || email.split('@')[0],
-      role: data.role,
+      id: u.id || data.userId,
+      email: u.email || data.email || email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      name: fullName || data.name || email.split('@')[0],
+      role: u.role || data.role || 'DEVELOPER',
     };
     setUser(userObj);
     localStorage.setItem('apishield_user', JSON.stringify(userObj));
@@ -82,7 +101,7 @@ export const AuthProvider = ({ children }) => {
     setAccessToken(null);
   };
 
-  const role = user?.role || null;
+  const role = user?.role || (user ? 'DEVELOPER' : null);
   const isOwner = role === 'OWNER';
   const isDeveloper = role === 'DEVELOPER';
   const isAdmin = role === 'ADMIN';
