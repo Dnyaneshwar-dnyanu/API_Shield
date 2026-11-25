@@ -82,12 +82,19 @@ export const OwnerApisPage = () => {
     e.preventDefault();
     setPlanSaving(true);
     try {
+      const priceInCents = Math.round((parseFloat(monthlyPrice) || 0) * 100);
+      const resolvedPlanType = (planTier === 'PAID' || planTier === 'PRO') ? 'PAID' : 'FREE';
+
       await ownerApi.addPlan(selectedApiForPlan.id, {
         name: planName,
-        tier: planTier,
-        monthlyPrice: parseFloat(monthlyPrice),
-        monthlyQuota: Number(monthlyQuota),
-        rateLimitRps: Number(planRps),
+        planType: resolvedPlanType,
+        tier: resolvedPlanType,
+        priceCents: priceInCents,
+        monthlyPrice: parseFloat(monthlyPrice) || 0,
+        quotaMonthly: Number(monthlyQuota) || 5000,
+        monthlyQuota: Number(monthlyQuota) || 5000,
+        rateLimitRps: Number(planRps) || 10,
+        billingCycle: 'MONTHLY',
       });
       setSelectedApiForPlan(null);
       fetchApis();

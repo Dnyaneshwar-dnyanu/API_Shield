@@ -73,12 +73,19 @@ export const CreateApiPage = () => {
       }
 
       // 3. Add Initial Plan
+      const priceInCents = Math.round((parseFloat(monthlyPrice) || 0) * 100);
+      const resolvedPlanType = (planTier === 'PAID' || planTier === 'PRO') ? 'PAID' : 'FREE';
+
       await ownerApi.addPlan(newApi.id, {
         name: planName,
-        tier: planTier,
-        monthlyPrice: parseFloat(monthlyPrice),
-        monthlyQuota: Number(monthlyQuota),
-        rateLimitRps: Number(rateLimitRps),
+        planType: resolvedPlanType,
+        tier: resolvedPlanType,
+        priceCents: priceInCents,
+        monthlyPrice: parseFloat(monthlyPrice) || 0,
+        quotaMonthly: Number(monthlyQuota) || 5000,
+        monthlyQuota: Number(monthlyQuota) || 5000,
+        rateLimitRps: Number(rateLimitRps) || 10,
+        billingCycle: 'MONTHLY',
       });
 
       // 4. Publish if requested
