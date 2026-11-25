@@ -27,9 +27,13 @@ public class SubscriptionConfiguration {
     }
 
     @Bean
-    public RestClient registryRestClient() {
+    public RestClient registryRestClient(ObjectMapper objectMapper) {
         return RestClient.builder()
                 .baseUrl(registryServiceUrl)
+                .messageConverters(converters -> {
+                    converters.removeIf(c -> c instanceof org.springframework.http.converter.json.MappingJackson2HttpMessageConverter);
+                    converters.add(new org.springframework.http.converter.json.MappingJackson2HttpMessageConverter(objectMapper));
+                })
                 .build();
     }
 }

@@ -263,7 +263,7 @@ export const ApiDetailPage = () => {
                   <ul className="space-y-3 text-xs text-slate-300">
                     <li className="flex items-center space-x-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                      <span>{Number(plan.monthlyQuota || 1000).toLocaleString()} requests/month</span>
+                      <span>{Number(plan.monthlyQuota || plan.quotaMonthly || 1000).toLocaleString()} requests/month</span>
                     </li>
                     <li className="flex items-center space-x-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
@@ -367,7 +367,7 @@ export const ApiDetailPage = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Monthly Quota:</span>
-                  <span className="font-semibold text-white">{Number(selectedPlan.monthlyQuota).toLocaleString()} calls</span>
+                  <span className="font-semibold text-white">{Number(selectedPlan.monthlyQuota || selectedPlan.quotaMonthly || 0).toLocaleString()} calls</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Price:</span>
