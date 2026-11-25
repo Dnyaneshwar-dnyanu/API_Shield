@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Shield, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
+import { notify } from '../../utils/toast';
 
 export const LoginPage = () => {
   const { login } = useAuth();
@@ -19,6 +20,7 @@ export const LoginPage = () => {
 
     try {
       const user = await login(email, password);
+      notify.success(`Welcome back, ${user.firstName || user.email}!`);
       if (user.role === 'OWNER' || user.role === 'API_OWNER') {
         navigate('/owner/dashboard');
       } else if (user.role === 'ADMIN') {
@@ -27,11 +29,11 @@ export const LoginPage = () => {
         navigate('/dev/dashboard');
       }
     } catch (err) {
-      setError(
-        err.response?.data?.detail || 
+      const msg = err.response?.data?.detail || 
         err.response?.data?.message || 
-        'Invalid email or password'
-      );
+        'Invalid email or password';
+      setError(msg);
+      notify.error(err, 'Sign in failed');
     } finally {
       setLoading(false);
     }

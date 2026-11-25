@@ -33,7 +33,7 @@ public class ApiKeyController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping
+    @GetMapping({"", "/my"})
     public ResponseEntity<List<ApiKeyResponse>> listKeys(
             @RequestHeader(value = HeaderConstants.X_USER_ID, required = false) String developerId) {
         log.info("REST: list API keys for developer: {}", developerId);
@@ -51,13 +51,13 @@ public class ApiKeyController {
         return ResponseEntity.ok(apiKeyService.getKeyById(id, developerId));
     }
 
-    @PostMapping("/{id}/revoke")
+    @RequestMapping(value = {"/{id}/revoke", "/{id}"}, method = {RequestMethod.POST, RequestMethod.DELETE})
     public ResponseEntity<ApiKeyResponse> revokeKey(
             @PathVariable UUID id,
             @RequestBody(required = false) RevokeKeyRequest request,
             @RequestHeader(value = HeaderConstants.X_USER_ID, required = false) String developerId) {
         log.info("REST: revoke API key ID: {}", id);
-        String reason = request != null ? request.getReason() : "Revoked by user";
+        String reason = request != null && request.getReason() != null ? request.getReason() : "Revoked by user";
         return ResponseEntity.ok(apiKeyService.revokeKey(id, developerId, reason));
     }
 

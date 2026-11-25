@@ -46,7 +46,7 @@ public class SubscriptionController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{id}/cancel")
+    @RequestMapping(value = {"/{id}/cancel", "/{id}"}, method = {RequestMethod.PUT, RequestMethod.DELETE})
     public ResponseEntity<SubscriptionResponse> cancelSubscription(
             @PathVariable UUID id,
             @RequestHeader(value = HeaderConstants.X_USER_ID, defaultValue = "developer-default-id") String developerId) {

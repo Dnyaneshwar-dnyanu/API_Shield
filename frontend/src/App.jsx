@@ -1,5 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
 import { NotificationDrawer } from './components/common/NotificationDrawer';
@@ -33,6 +35,18 @@ export function App() {
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
       <NotificationDrawer />
+      <ToastContainer
+        position="top-right"
+        autoClose={3500}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
 
       <main className="flex-1">
         <Routes>

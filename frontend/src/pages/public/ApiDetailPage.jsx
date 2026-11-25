@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/common/Modal';
+import { notify } from '../../utils/toast';
 
 export const ApiDetailPage = () => {
   const { slug } = useParams();
@@ -49,6 +50,7 @@ export const ApiDetailPage = () => {
 
     if (!isDeveloper) {
       setSubError('Only registered developer accounts can subscribe to APIs.');
+      notify.warning('Only registered developer accounts can subscribe to APIs.');
       return;
     }
 
@@ -60,8 +62,11 @@ export const ApiDetailPage = () => {
         planId: selectedPlan.id,
       });
       setSubSuccess(result);
+      notify.success('Subscribed successfully! You can now generate an API key.');
     } catch (err) {
-      setSubError(err.response?.data?.detail || 'Failed to initiate subscription');
+      const msg = err.response?.data?.detail || 'Failed to initiate subscription';
+      setSubError(msg);
+      notify.error(err, 'Failed to initiate subscription');
     } finally {
       setSubscribing(false);
     }

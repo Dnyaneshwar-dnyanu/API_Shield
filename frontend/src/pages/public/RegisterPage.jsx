@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Shield, Lock, Mail, User, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
+import { notify } from '../../utils/toast';
 
 export const RegisterPage = () => {
   const { register } = useAuth();
@@ -38,21 +39,20 @@ export const RegisterPage = () => {
         password,
         role: role
       });
+      notify.success('Account created successfully! You may now sign in.');
       setRegistered(true);
     } catch (err) {
       const resp = err.response?.data;
+      let msg = 'Registration failed. Please check your details.';
       if (resp?.validationErrors) {
-        const validationMsg = Object.entries(resp.validationErrors)
-          .map(([field, msg]) => `${field}: ${msg}`)
+        msg = Object.entries(resp.validationErrors)
+          .map(([field, m]) => `${field}: ${m}`)
           .join(', ');
-        setError(validationMsg);
-      } else {
-        setError(
-          resp?.detail || 
-          resp?.message || 
-          'Registration failed. Please check your details.'
-        );
+      } else if (resp?.detail || resp?.message) {
+        msg = resp.detail || resp.message;
       }
+      setError(msg);
+      notify.error(err, 'Registration failed');
     } finally {
       setLoading(false);
     }

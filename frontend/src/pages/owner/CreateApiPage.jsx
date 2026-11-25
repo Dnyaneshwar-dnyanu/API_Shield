@@ -9,6 +9,7 @@ import {
   Check, 
   ShieldAlert
 } from 'lucide-react';
+import { notify } from '../../utils/toast';
 
 export const CreateApiPage = () => {
   const navigate = useNavigate();
@@ -93,9 +94,12 @@ export const CreateApiPage = () => {
         await ownerApi.publishApi(newApi.id);
       }
 
+      notify.success('API registered and published successfully!');
       navigate('/owner/apis');
     } catch (err) {
-      setError(err.response?.data?.detail || err.response?.data?.message || 'Failed to register API');
+      const msg = err.response?.data?.detail || err.response?.data?.message || 'Failed to register API';
+      setError(msg);
+      notify.error(err, 'Failed to register API');
     } finally {
       setLoading(false);
     }

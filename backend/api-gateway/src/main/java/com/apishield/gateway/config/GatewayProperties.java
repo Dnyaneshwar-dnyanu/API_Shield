@@ -14,7 +14,7 @@ public class GatewayProperties {
 
     @Data
     public static class Services {
-        private String registryServiceUrl = "http://api-registry-service";
-        private String apiKeyServiceUrl = "http://api-key-service";
+        private String registryServiceUrl = "http://localhost:8082";
+        private String apiKeyServiceUrl = "http://localhost:8084";
     }
 }

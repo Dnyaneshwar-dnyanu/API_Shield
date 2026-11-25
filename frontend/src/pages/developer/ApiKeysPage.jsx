@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/common/Modal';
+import { notify } from '../../utils/toast';
 
 export const ApiKeysPage = () => {
   const [keys, setKeys] = useState([]);
@@ -34,7 +35,7 @@ export const ApiKeysPage = () => {
   const fetchKeys = () => {
     setLoading(true);
     apiKeyApi.getMyKeys({ page: 0, size: 50 })
-      .then((data) => setKeys(data.content || []))
+      .then((data) => setKeys(Array.isArray(data) ? data : (data?.content || [])))
       .catch(() => setKeys([]))
       .finally(() => setLoading(false));
   };
@@ -66,9 +67,12 @@ export const ApiKeysPage = () => {
       setIsGenerateOpen(false);
       setKeyName('');
       setRawKeyData(data); // Display unmasked key in reveal-once modal
+      notify.success('API key generated! Please copy and store it safely.');
       fetchKeys();
     } catch (err) {
-      setGenerateError(err.response?.data?.message || err.response?.data?.detail || 'Failed to generate API key');
+      const msg = err.response?.data?.message || err.response?.data?.detail || 'Failed to generate API key';
+      setGenerateError(msg);
+      notify.error(err, 'Failed to generate API key');
     } finally {
       setGenerating(false);
     }
@@ -78,9 +82,10 @@ export const ApiKeysPage = () => {
     if (!window.confirm('Are you sure you want to revoke this API key? This action is permanent and cannot be undone.')) return;
     try {
       await apiKeyApi.revokeKey(id, 'User manually revoked from portal');
+      notify.success('API key revoked successfully');
       fetchKeys();
     } catch (err) {
-      alert('Failed to revoke API key: ' + (err.response?.data?.detail || err.message));
+      notify.error(err, 'Failed to revoke API key');
     }
   };
 

@@ -35,7 +35,8 @@ export const ApiPlaygroundPage = () => {
       catalogApi.listCatalog({ page: 0, size: 50 }),
     ]).then(([keyRes, apiRes]) => {
       if (keyRes.status === 'fulfilled') {
-        const keyList = keyRes.value.content || [];
+        const rawVal = keyRes.value;
+        const keyList = Array.isArray(rawVal) ? rawVal : (rawVal?.content || []);
         setKeys(keyList);
         if (keyList.length > 0) {
           // Note: for testing in playground, developer can enter their raw key or select their key prefix

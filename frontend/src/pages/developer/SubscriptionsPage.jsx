@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { subscriptionApi } from '../../api/subscriptionApi';
 import { CreditCard, Trash2, AlertCircle, CheckCircle } from 'lucide-react';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { notify } from '../../utils/toast';
 
 export const SubscriptionsPage = () => {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -24,9 +25,12 @@ export const SubscriptionsPage = () => {
     if (!window.confirm('Are you sure you want to cancel this subscription?')) return;
     try {
       await subscriptionApi.cancelSubscription(id);
+      notify.success('Subscription cancelled successfully');
       fetchSubscriptions();
     } catch (err) {
-      setActionError(err.response?.data?.detail || 'Failed to cancel subscription');
+      const msg = err.response?.data?.detail || 'Failed to cancel subscription';
+      setActionError(msg);
+      notify.error(err, 'Failed to cancel subscription');
     }
   };
 

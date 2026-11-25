@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/common/Modal';
+import { notify } from '../../utils/toast';
 
 export const OwnerApisPage = () => {
   const [apis, setApis] = useState([]);
@@ -49,12 +50,14 @@ export const OwnerApisPage = () => {
     try {
       if (api.status === 'PUBLISHED') {
         await ownerApi.unpublishApi(api.id);
+        notify.success('API unpublished successfully');
       } else {
         await ownerApi.publishApi(api.id);
+        notify.success('API published to marketplace!');
       }
       fetchApis();
     } catch (err) {
-      alert('Error updating API status: ' + (err.response?.data?.detail || err.message));
+      notify.error(err, 'Error updating API status');
     }
   };
 
@@ -70,9 +73,10 @@ export const OwnerApisPage = () => {
       });
       setSelectedApiForEndpoint(null);
       setEndpointPath('');
+      notify.success('Endpoint added successfully!');
       fetchApis();
     } catch (err) {
-      alert('Failed to add endpoint: ' + (err.response?.data?.detail || err.message));
+      notify.error(err, 'Failed to add endpoint');
     } finally {
       setEndpointSaving(false);
     }
@@ -97,9 +101,10 @@ export const OwnerApisPage = () => {
         billingCycle: 'MONTHLY',
       });
       setSelectedApiForPlan(null);
+      notify.success('Pricing plan added successfully!');
       fetchApis();
     } catch (err) {
-      alert('Failed to add pricing plan: ' + (err.response?.data?.detail || err.message));
+      notify.error(err, 'Failed to add pricing plan');
     } finally {
       setPlanSaving(false);
     }

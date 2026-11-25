@@ -31,7 +31,10 @@ export const DeveloperDashboard = () => {
       analyticsApi.getDeveloperLogs({ page: 0, size: 5 }),
     ]).then(([subRes, keyRes, quotaRes, logRes]) => {
       if (subRes.status === 'fulfilled') setSubscriptions(subRes.value.content || []);
-      if (keyRes.status === 'fulfilled') setKeys(keyRes.value.content || []);
+      if (keyRes.status === 'fulfilled') {
+        const val = keyRes.value;
+        setKeys(Array.isArray(val) ? val : (val?.content || []));
+      }
       if (quotaRes.status === 'fulfilled') setQuota(quotaRes.value);
       if (logRes.status === 'fulfilled') setRecentLogs(logRes.value.content || []);
       setLoading(false);

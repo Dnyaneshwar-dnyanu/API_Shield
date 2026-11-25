@@ -10,6 +10,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { notify } from '../../utils/toast';
 
 const MICROSERVICES = [
   { name: 'Edge API Gateway', port: 8080, type: 'Data Plane', status: 'UP' },
@@ -44,9 +45,10 @@ export const AdminDashboard = () => {
     if (!reason) return;
     try {
       await adminApi.suspendUser(userId, reason);
+      notify.success('User suspended successfully');
       fetchUsers();
     } catch (err) {
-      alert('Error suspending user: ' + (err.response?.data?.detail || err.message));
+      notify.error(err, 'Error suspending user');
     }
   };
 
@@ -54,9 +56,10 @@ export const AdminDashboard = () => {
     if (!window.confirm('Reactivate this user account?')) return;
     try {
       await adminApi.reactivateUser(userId);
+      notify.success('User reactivated successfully');
       fetchUsers();
     } catch (err) {
-      alert('Error reactivating user: ' + (err.response?.data?.detail || err.message));
+      notify.error(err, 'Error reactivating user');
     }
   };
 
