@@ -1,5 +1,6 @@
 package com.apishield.registry.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -30,9 +31,11 @@ public class CreateApiRequest {
 
     @NotBlank(message = "Target backend URL is required")
     @Size(max = 500, message = "Target backend URL must not exceed 500 characters")
+    @JsonAlias({"targetBaseUrl", "target_backend_url"})
     private String targetBackendUrl;
 
     @Builder.Default
+    @JsonAlias({"version", "version_label"})
     private String versionLabel = "v1";
 
     @JsonProperty("isPublic")

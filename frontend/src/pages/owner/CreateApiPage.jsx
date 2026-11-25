@@ -54,8 +54,10 @@ export const CreateApiPage = () => {
         name,
         slug,
         description,
+        targetBackendUrl: targetBaseUrl,
         targetBaseUrl,
         category,
+        versionLabel: version,
         version,
         authType,
       });
