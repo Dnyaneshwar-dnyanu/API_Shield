@@ -72,7 +72,7 @@ public class ApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/{id}/publish")
+    @RequestMapping(value = "/{id}/publish", method = {RequestMethod.PUT, RequestMethod.POST})
     public ResponseEntity<ApiResponse> publishApi(
             @PathVariable UUID id,
             @RequestHeader(value = HeaderConstants.X_USER_ID, defaultValue = "owner-default-id") String ownerId) {
@@ -80,7 +80,7 @@ public class ApiController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{id}/deprecate")
+    @RequestMapping(value = {"/{id}/deprecate", "/{id}/unpublish"}, method = {RequestMethod.PUT, RequestMethod.POST})
     public ResponseEntity<ApiResponse> deprecateApi(
             @PathVariable UUID id,
             @RequestHeader(value = HeaderConstants.X_USER_ID, defaultValue = "owner-default-id") String ownerId) {

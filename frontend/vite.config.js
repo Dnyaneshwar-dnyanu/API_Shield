@@ -4,21 +4,50 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  // Default to 8081 (user-service standalone) or 8080 (API Gateway when full stack runs)
-  const target = env.VITE_BACKEND_URL || 'http://127.0.0.1:8081'
+  // Default microservice targets for standalone mode
+  const userServiceTarget = env.VITE_USER_SERVICE_URL || 'http://127.0.0.1:8081'
+  const registryServiceTarget = env.VITE_REGISTRY_SERVICE_URL || 'http://127.0.0.1:8082'
+  const subscriptionServiceTarget = env.VITE_SUBSCRIPTION_SERVICE_URL || 'http://127.0.0.1:8083'
+  const apiKeyServiceTarget = env.VITE_APIKEY_SERVICE_URL || 'http://127.0.0.1:8084'
+  const paymentServiceTarget = env.VITE_PAYMENT_SERVICE_URL || 'http://127.0.0.1:8085'
 
   return {
     plugins: [react()],
     server: {
       port: 5173,
       proxy: {
+        '/api/v1/apis': {
+          target: registryServiceTarget,
+          changeOrigin: true,
+          secure: false
+        },
+        '/api/v1/catalog': {
+          target: registryServiceTarget,
+          changeOrigin: true,
+          secure: false
+        },
+        '/api/v1/subscriptions': {
+          target: subscriptionServiceTarget,
+          changeOrigin: true,
+          secure: false
+        },
+        '/api/v1/keys': {
+          target: apiKeyServiceTarget,
+          changeOrigin: true,
+          secure: false
+        },
+        '/api/v1/payments': {
+          target: paymentServiceTarget,
+          changeOrigin: true,
+          secure: false
+        },
         '/api': {
-          target: target,
+          target: userServiceTarget,
           changeOrigin: true,
           secure: false
         },
         '/gateway': {
-          target: target,
+          target: userServiceTarget,
           changeOrigin: true,
           secure: false
         }

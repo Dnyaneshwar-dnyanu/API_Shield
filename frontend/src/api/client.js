@@ -17,6 +17,18 @@ client.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    // Attach user identity headers for direct microservice communication
+    const userJson = localStorage.getItem('apishield_user');
+    if (userJson) {
+      try {
+        const u = JSON.parse(userJson);
+        if (u.id) {
+          config.headers['X-User-Id'] = u.id;
+          config.headers['X-User-Role'] = u.role || 'DEVELOPER';
+        }
+      } catch {}
+    }
+
     // Generate lightweight UUIDv4 for correlation tracing
     if (!config.headers['X-Correlation-ID']) {
       config.headers['X-Correlation-ID'] = 'ui-' + Math.random().toString(36).substring(2, 15);
