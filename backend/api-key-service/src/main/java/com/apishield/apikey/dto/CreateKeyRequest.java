@@ -15,7 +15,6 @@ public class CreateKeyRequest {
     @NotBlank(message = "API Key name is required")
     private String name;
 
-    @NotBlank(message = "API ID is required")
     private String apiId;
 
     @NotBlank(message = "Subscription ID is required")

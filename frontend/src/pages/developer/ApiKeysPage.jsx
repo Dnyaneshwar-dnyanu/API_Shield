@@ -56,9 +56,11 @@ export const ApiKeysPage = () => {
     setGenerateError(null);
 
     try {
+      const selectedSub = subscriptions.find((s) => s.id === selectedSubId);
       const data = await apiKeyApi.generateKey({
         name: keyName,
         subscriptionId: selectedSubId,
+        apiId: selectedSub?.apiId || '',
       });
 
       setIsGenerateOpen(false);
@@ -66,7 +68,7 @@ export const ApiKeysPage = () => {
       setRawKeyData(data); // Display unmasked key in reveal-once modal
       fetchKeys();
     } catch (err) {
-      setGenerateError(err.response?.data?.detail || 'Failed to generate API key');
+      setGenerateError(err.response?.data?.message || err.response?.data?.detail || 'Failed to generate API key');
     } finally {
       setGenerating(false);
     }
@@ -252,13 +254,13 @@ export const ApiKeysPage = () => {
                 <input
                   type="text"
                   readOnly
-                  value={rawKeyData.rawApiKey || rawKeyData.key || ''}
+                  value={rawKeyData.apiKey || rawKeyData.rawApiKey || rawKeyData.key || ''}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400 selection:bg-emerald-500 selection:text-black focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(rawKeyData.rawApiKey || rawKeyData.key || '');
+                    navigator.clipboard.writeText(rawKeyData.apiKey || rawKeyData.rawApiKey || rawKeyData.key || '');
                     setCopiedKey(true);
                     setTimeout(() => setCopiedKey(false), 2000);
                   }}

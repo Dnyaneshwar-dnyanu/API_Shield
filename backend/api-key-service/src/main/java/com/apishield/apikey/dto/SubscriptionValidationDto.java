@@ -1,5 +1,7 @@
 package com.apishield.apikey.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +13,9 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SubscriptionValidationDto {
+    @JsonAlias({"active", "valid"})
     private boolean valid;
     private UUID subscriptionId;
     private String status;

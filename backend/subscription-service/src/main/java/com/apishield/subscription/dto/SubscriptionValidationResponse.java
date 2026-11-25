@@ -1,6 +1,7 @@
 package com.apishield.subscription.dto;
 
 import com.apishield.subscription.model.SubscriptionStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.time.Instant;
@@ -22,4 +23,9 @@ public class SubscriptionValidationResponse {
     private int rateLimitRps;
     private int quotaMonthly;
     private Instant currentPeriodEnd;
+
+    @JsonProperty("valid")
+    public boolean isValid() {
+        return active;
+    }
 }
