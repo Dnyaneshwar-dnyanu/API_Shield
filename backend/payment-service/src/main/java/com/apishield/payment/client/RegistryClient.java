@@ -16,7 +16,7 @@ public class RegistryClient {
     private final RestClient restClient;
 
     public RegistryClient(
-            @Value("${services.api-registry-service.url:http://localhost:8082}") String registryServiceUrl) {
+            @Value("${services.api-registry-service.url:http://127.0.0.1:8082}") String registryServiceUrl) {
         this.restClient = RestClient.builder()
                 .baseUrl(registryServiceUrl)
                 .build();

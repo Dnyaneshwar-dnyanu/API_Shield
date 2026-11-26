@@ -16,7 +16,7 @@ public class SubscriptionClient {
     private final RestClient restClient;
 
     public SubscriptionClient(
-            @Value("${services.subscription-service.url:http://localhost:8083}") String subscriptionServiceUrl) {
+            @Value("${services.subscription-service.url:http://127.0.0.1:8083}") String subscriptionServiceUrl) {
         this.restClient = RestClient.builder()
                 .baseUrl(subscriptionServiceUrl)
                 .build();

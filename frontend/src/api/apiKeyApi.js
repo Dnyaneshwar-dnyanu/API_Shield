@@ -17,4 +17,9 @@ export const apiKeyApi = {
     });
     return response.data;
   },
+
+  rollKey: async (id) => {
+    const response = await client.post(`/keys/${id}/roll`);
+    return response.data;
+  },
 };

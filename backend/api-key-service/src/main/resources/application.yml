@@ -77,4 +77,4 @@ management:
 
 services:
   subscription-service:
-    url: ${SUBSCRIPTION_SERVICE_URL:http://localhost:8083}
+    url: ${SUBSCRIPTION_SERVICE_URL:http://127.0.0.1:8083}

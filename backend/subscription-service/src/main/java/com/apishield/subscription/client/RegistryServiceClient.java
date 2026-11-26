@@ -31,6 +31,9 @@ public class RegistryServiceClient {
                     .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
                         throw new ResourceNotFoundException("Target plan not found with ID: " + planId);
                     })
+                    .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                        throw new ResourceNotFoundException("Registry service internal error while resolving plan: " + planId);
+                    })
                     .body(PlanResponse.class);
         } catch (ResourceNotFoundException e) {
             throw e;

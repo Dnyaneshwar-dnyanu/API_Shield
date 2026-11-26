@@ -13,7 +13,7 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class SubscriptionConfiguration {
 
-    @Value("${apishield.services.registry-url:http://localhost:8082}")
+    @Value("${apishield.services.registry-url:http://127.0.0.1:8082}")
     private String registryServiceUrl;
 
     @Bean
@@ -23,6 +23,7 @@ public class SubscriptionConfiguration {
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false);
         return mapper;
     }
 
