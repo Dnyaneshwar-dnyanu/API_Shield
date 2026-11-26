@@ -170,7 +170,7 @@ export const ApiPlaygroundPage = () => {
 
   const cleanSubpath = subpath.startsWith('/') ? subpath : `/${subpath}`;
   const fullGatewayUrl = `http://localhost:8080/gateway/${selectedApiSlug}${cleanSubpath}`;
-  const curlCommand = `curl.exe -X ${method} "${fullGatewayUrl}" \\\n  -H "X-API-Key: ${selectedApiKey || 'YOUR_API_KEY'}" \\\n  -H "Accept: application/json"${['POST', 'PUT', 'PATCH'].includes(method) ? ` \\\n  -H "Content-Type: application/json" \\\n  -d '${requestBody.replace(/\n/g, ' ')}'` : ''}`;
+  const curlCommand = `curl.exe -X ${method} "${fullGatewayUrl}" -H "X-API-Key: ${selectedApiKey || 'YOUR_API_KEY'}" -H "Accept: application/json"${['POST', 'PUT', 'PATCH'].includes(method) ? ` -H "Content-Type: application/json" -d '${requestBody.replace(/\n/g, ' ')}'` : ''}`;
 
   const handleCopyCurl = () => {
     navigator.clipboard.writeText(curlCommand);

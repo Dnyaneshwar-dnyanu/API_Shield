@@ -21,6 +21,10 @@ spring:
     compatibility-verifier:
       enabled: false
     gateway:
+      forwarded:
+        enabled: false
+      x-forwarded:
+        enabled: false
       discovery:
         locator:
           enabled: false
@@ -77,7 +81,7 @@ spring:
 
         # Data Plane Proxy Route (9-phase proxy pipeline)
         - id: data-plane-proxy
-          uri: no://op
+          uri: http://127.0.0.1:8089
           predicates:
             - Path=/gateway/{apiSlug}/**
           filters:
@@ -103,7 +107,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,gateway
   endpoint:
+    gateway:
+      enabled: true
     health:
       show-details: always
