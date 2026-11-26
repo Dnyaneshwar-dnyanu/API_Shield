@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   // Default microservice targets for standalone mode
+  const gatewayTarget = env.VITE_GATEWAY_URL || 'http://127.0.0.1:8080'
   const userServiceTarget = env.VITE_USER_SERVICE_URL || 'http://127.0.0.1:8081'
   const registryServiceTarget = env.VITE_REGISTRY_SERVICE_URL || 'http://127.0.0.1:8082'
   const subscriptionServiceTarget = env.VITE_SUBSCRIPTION_SERVICE_URL || 'http://127.0.0.1:8083'
@@ -12,7 +13,6 @@ export default defineConfig(({ mode }) => {
   const paymentServiceTarget = env.VITE_PAYMENT_SERVICE_URL || 'http://127.0.0.1:8085'
   const notificationServiceTarget = env.VITE_NOTIFICATION_SERVICE_URL || 'http://127.0.0.1:8086'
   const analyticsServiceTarget = env.VITE_ANALYTICS_SERVICE_URL || 'http://127.0.0.1:8087'
-  const gatewayTarget = env.VITE_GATEWAY_URL || 'http://127.0.0.1:8080'
 
   return {
     plugins: [react()],

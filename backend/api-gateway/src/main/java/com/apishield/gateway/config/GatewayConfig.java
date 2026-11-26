@@ -27,8 +27,8 @@ public class GatewayConfig {
 
     @Bean
     @Primary
-    public WebClient webClient(WebClient.Builder builder) {
-        return builder.build();
+    public WebClient webClient() {
+        return WebClient.builder().build();
     }
 
     @Bean

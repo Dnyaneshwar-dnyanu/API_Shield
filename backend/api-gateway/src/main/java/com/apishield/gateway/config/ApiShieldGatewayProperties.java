@@ -5,7 +5,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Data
-@Component("apiShieldGatewayProperties")
 @ConfigurationProperties(prefix = "apishield.gateway")
 public class ApiShieldGatewayProperties {
 
@@ -14,7 +13,7 @@ public class ApiShieldGatewayProperties {
 
     @Data
     public static class Services {
-        private String registryServiceUrl = "http://localhost:8082";
-        private String apiKeyServiceUrl = "http://localhost:8084";
+        private String registryServiceUrl = "http://127.0.0.1:8082";
+        private String apiKeyServiceUrl = "http://127.0.0.1:8084";
     }
 }

@@ -96,8 +96,8 @@ apishield:
   gateway:
     internal-secret: ${GATEWAY_INTERNAL_SECRET:apishield-internal-secret-token-key-32bytes-min!}
     services:
-      registry-service-url: ${REGISTRY_SERVICE_URL:http://localhost:8082}
-      api-key-service-url: ${API_KEY_SERVICE_URL:http://localhost:8084}
+      registry-service-url: ${REGISTRY_SERVICE_URL:http://127.0.0.1:8082}
+      api-key-service-url: ${API_KEY_SERVICE_URL:http://127.0.0.1:8084}
 
 management:
   endpoints:

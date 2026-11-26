@@ -95,7 +95,9 @@ export const ApiDetailPage = () => {
     );
   }
 
-  const sampleCurl = `curl -X GET "https://api.apishield.io/gateway/${api.slug}/current" \\
+  const samplePath = (api.endpoints && api.endpoints.length > 0) ? api.endpoints[0].pathPattern : '/posts';
+  const cleanSamplePath = samplePath.startsWith('/') ? samplePath : `/${samplePath}`;
+  const sampleCurl = `curl.exe -X GET "http://localhost:8080/gateway/${api.slug}${cleanSamplePath}" \\
   -H "X-API-Key: ash_live_your_api_key_here" \\
   -H "Accept: application/json"`;
 
