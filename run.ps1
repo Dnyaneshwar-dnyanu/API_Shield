@@ -46,8 +46,33 @@ function Test-PortOpen {
 # ------------------------------------------------------------------------------
 Write-Host "[1/5] Checking environment prerequisites..." -ForegroundColor Yellow
 
-# Check Java
+# Check Java (auto-discover if missing from session PATH)
 $javaCmd = Get-Command java -ErrorAction SilentlyContinue
+if (-not $javaCmd) {
+    if ($env:JAVA_HOME -and (Test-Path "$env:JAVA_HOME\bin\java.exe")) {
+        $env:PATH = "$env:JAVA_HOME\bin;" + $env:PATH
+        $javaCmd = Get-Command java -ErrorAction SilentlyContinue
+    }
+}
+if (-not $javaCmd) {
+    $candidates = @(
+        "C:\Program Files\Eclipse Adoptium\jdk-21*\bin\java.exe",
+        "C:\Program Files\Eclipse Adoptium\jdk-*\bin\java.exe",
+        "C:\Program Files\Java\jdk-21*\bin\java.exe",
+        "C:\Program Files\Java\jdk-*\bin\java.exe",
+        "C:\Program Files\Microsoft\jdk-21*\bin\java.exe"
+    )
+    foreach ($pattern in $candidates) {
+        $found = Resolve-Path $pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($found) {
+            $binDir = Split-Path -Parent $found.Path
+            $env:PATH = "$binDir;" + $env:PATH
+            $javaCmd = Get-Command java -ErrorAction SilentlyContinue
+            break
+        }
+    }
+}
+
 if ($javaCmd) {
     Write-Host "  [OK] Java detected at: $($javaCmd.Source)" -ForegroundColor Green
 } else {
@@ -55,8 +80,14 @@ if ($javaCmd) {
     exit 1
 }
 
-# Check Node.js & npm
+# Check Node.js & npm (auto-discover if missing from session PATH)
 $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+if (-not $nodeCmd) {
+    if (Test-Path "C:\Program Files\nodejs\node.exe") {
+        $env:PATH = "C:\Program Files\nodejs;" + $env:PATH
+        $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+    }
+}
 if ($nodeCmd) {
     Write-Host "  [OK] Node.js detected at: $($nodeCmd.Source)" -ForegroundColor Green
 } else {
