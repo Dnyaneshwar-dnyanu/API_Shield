@@ -1,7 +1,7 @@
 package com.apishield.gateway.filter;
 
 import com.apishield.common.constant.HeaderConstants;
-import com.apishield.gateway.config.GatewayProperties;
+import com.apishield.gateway.config.ApiShieldGatewayProperties;
 import com.apishield.gateway.dto.ApiKeyAuthData;
 import com.apishield.gateway.dto.ApiMetadata;
 import com.apishield.gateway.service.ApiKeyVerificationService;
@@ -60,7 +60,7 @@ class DataPlaneGatewayFilterTest {
     private GatewayTelemetryPublisher telemetryPublisher;
 
     private DataPlaneGatewayFilterFactory filterFactory;
-    private GatewayProperties gatewayProperties;
+    private ApiShieldGatewayProperties gatewayProperties;
     private ObjectMapper objectMapper;
     private GatewayFilter filter;
 
@@ -71,7 +71,7 @@ class DataPlaneGatewayFilterTest {
 
     @BeforeEach
     void setUp() {
-        gatewayProperties = new GatewayProperties();
+        gatewayProperties = new ApiShieldGatewayProperties();
         gatewayProperties.setInternalSecret("test-internal-secret-token-key-32bytes-min!");
 
         objectMapper = new ObjectMapper();

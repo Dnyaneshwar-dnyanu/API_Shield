@@ -3,7 +3,7 @@ package com.apishield.gateway.filter;
 import com.apishield.common.constant.HeaderConstants;
 import com.apishield.common.dto.ProblemDetailResponse;
 import com.apishield.common.util.CryptoUtils;
-import com.apishield.gateway.config.GatewayProperties;
+import com.apishield.gateway.config.ApiShieldGatewayProperties;
 import com.apishield.gateway.dto.ApiKeyAuthData;
 import com.apishield.gateway.dto.ApiMetadata;
 import com.apishield.gateway.dto.GatewayTelemetryEvent;
@@ -61,7 +61,7 @@ public class DataPlaneGatewayFilterFactory extends AbstractGatewayFilterFactory<
     private final RateLimitService rateLimitService;
     private final QuotaService quotaService;
     private final GatewayTelemetryPublisher telemetryPublisher;
-    private final GatewayProperties gatewayProperties;
+    private final ApiShieldGatewayProperties gatewayProperties;
     private final ObjectMapper objectMapper;
 
     public DataPlaneGatewayFilterFactory(
@@ -70,7 +70,7 @@ public class DataPlaneGatewayFilterFactory extends AbstractGatewayFilterFactory<
             RateLimitService rateLimitService,
             QuotaService quotaService,
             GatewayTelemetryPublisher telemetryPublisher,
-            GatewayProperties gatewayProperties,
+            ApiShieldGatewayProperties gatewayProperties,
             ObjectMapper objectMapper) {
         super(Config.class);
         this.apiResolutionService = apiResolutionService;

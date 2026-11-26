@@ -1,7 +1,7 @@
 package com.apishield.gateway.service;
 
 import com.apishield.common.util.CryptoUtils;
-import com.apishield.gateway.config.GatewayProperties;
+import com.apishield.gateway.config.ApiShieldGatewayProperties;
 import com.apishield.gateway.dto.ApiKeyAuthData;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +28,7 @@ public class ApiKeyVerificationService {
 
     private final ReactiveStringRedisTemplate redisTemplate;
     private final WebClient webClient;
-    private final GatewayProperties gatewayProperties;
+    private final ApiShieldGatewayProperties gatewayProperties;
     private final ObjectMapper objectMapper;
 
     public Mono<ApiKeyAuthData> verifyKey(String rawApiKey) {

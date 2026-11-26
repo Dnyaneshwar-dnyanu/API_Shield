@@ -1,7 +1,7 @@
 package com.apishield.gateway.service;
 
 import com.apishield.common.util.CryptoUtils;
-import com.apishield.gateway.config.GatewayProperties;
+import com.apishield.gateway.config.ApiShieldGatewayProperties;
 import com.apishield.gateway.dto.ApiKeyAuthData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,13 +35,13 @@ class ApiKeyVerificationServiceTest {
     @Mock
     private WebClient webClient;
 
-    private GatewayProperties gatewayProperties;
+    private ApiShieldGatewayProperties gatewayProperties;
     private ObjectMapper objectMapper;
     private ApiKeyVerificationService keyVerificationService;
 
     @BeforeEach
     void setUp() {
-        gatewayProperties = new GatewayProperties();
+        gatewayProperties = new ApiShieldGatewayProperties();
         objectMapper = new ObjectMapper();
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 

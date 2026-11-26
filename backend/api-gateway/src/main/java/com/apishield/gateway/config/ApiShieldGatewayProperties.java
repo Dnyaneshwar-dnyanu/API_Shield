@@ -5,9 +5,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Data
-@Component
+@Component("apiShieldGatewayProperties")
 @ConfigurationProperties(prefix = "apishield.gateway")
-public class GatewayProperties {
+public class ApiShieldGatewayProperties {
 
     private String internalSecret = "apishield-internal-secret-token-key-32bytes-min!";
     private Services services = new Services();

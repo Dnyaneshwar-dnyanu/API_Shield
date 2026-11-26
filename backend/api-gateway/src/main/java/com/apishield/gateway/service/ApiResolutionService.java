@@ -1,6 +1,6 @@
 package com.apishield.gateway.service;
 
-import com.apishield.gateway.config.GatewayProperties;
+import com.apishield.gateway.config.ApiShieldGatewayProperties;
 import com.apishield.gateway.dto.ApiMetadata;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,7 +26,7 @@ public class ApiResolutionService {
 
     private final ReactiveStringRedisTemplate redisTemplate;
     private final WebClient webClient;
-    private final GatewayProperties gatewayProperties;
+    private final ApiShieldGatewayProperties gatewayProperties;
     private final ObjectMapper objectMapper;
 
     public Mono<ApiMetadata> resolveApi(String slug) {
