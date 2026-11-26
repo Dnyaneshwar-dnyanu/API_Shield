@@ -116,6 +116,39 @@ For complete technical specifications, review the architecture documents:
 
 ---
 
+## Quick Start — One-Command Startup
+
+You can start the entire APIShield platform (all microservices, API Gateway, Eureka discovery, databases, and frontend SPA) with a single command:
+
+### On Windows (PowerShell / Command Prompt)
+
+```powershell
+# In PowerShell:
+.\run.ps1
+
+# Or in Command Prompt / Double-click:
+run.bat
+```
+
+To stop all running microservices and frontend at any time:
+```powershell
+# In PowerShell:
+.\stop.ps1
+
+# Or in Command Prompt / Double-click:
+stop.bat
+```
+
+### Pre-configured Test Accounts
+
+| Role | Email | Password | Access |
+| :--- | :--- | :--- | :--- |
+| **Developer** | `developer@apishield.dev` | `Password123!` | Marketplace, Subscriptions, API Keys, Interactive Playground |
+| **API Owner** | `owner@apishield.dev` | `Password123!` | API Management, Endpoints, Pricing Plans, Analytics |
+| **Administrator** | `admin@apishield.dev` | `Password123!` | Full platform administration & user governance |
+
+---
+
 ## Deployment & Orchestration
 
 ### 1. Full-Stack Docker Compose Orchestration
